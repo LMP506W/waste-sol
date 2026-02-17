@@ -1,70 +1,58 @@
 <!DOCTYPE html>
-<html lang="de" class="w-full h-full">
+<html lang="en" class="w-full h-full">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SP3ND-style Wallet Connect</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WasteSol Dark Layout Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/dist/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@latest/dist/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-react-ui@latest/dist/index.iife.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="w-full h-full bg-[#011627] text-white flex flex-col min-h-screen">
 
-<header class="bg-[#011627]/90 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center fixed w-full z-50">
-  <div class="font-bold text-2xl">SP3ND</div>
-  <div>
-    <button id="connectWallet" class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
-      Connect Wallet
-    </button>
-  </div>
-</header>
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-[#011627]/90 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <img src="/logo.svg" alt="WasteSol Logo" class="w-8 h-8">
+      <span class="font-bold text-xl">WasteSol</span>
+    </div>
+    <div>
+      <button id="connectWallet" class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+        Connect Wallet
+      </button>
+    </div>
+  </header>
 
-<main class="flex-grow flex items-center justify-center pt-20">
-  <div id="walletStatus" class="text-white/70 text-center">Wallet not connected</div>
-</main>
+  <!-- Main Content -->
+  <main class="flex-grow flex flex-col items-center justify-center pt-24 bg-[#011627]">
+    <h1 class="text-3xl font-bold mb-4">Welcome to WasteSol</h1>
+    <p class="text-white/70 mb-6 text-center">Connect your wallet to start using Solana.</p>
+    <div id="walletStatus" class="text-white/60 text-center">Wallet not connected</div>
+  </main>
 
-<footer class="bg-gradient-to-b from-[#011627] to-[#0a1a2e] border-t border-[#2EC4B6]/20 p-4 text-sm text-center mt-auto">
-  SP3ND - Shop Amazon with Stablecoins
-</footer>
+  <!-- Footer -->
+  <footer class="bg-[#011627] border-t border-[#2EC4B6]/20 p-6 text-center text-sm">
+    WasteSol - Shop Amazon with Stablecoins
+  </footer>
 
-<script>
-  const connectButton = document.getElementById("connectWallet");
-  const walletStatus = document.getElementById("walletStatus");
+  <!-- Wallet Script -->
+  <script>
+    const connectBtn = document.getElementById('connectWallet');
+    const statusEl = document.getElementById('walletStatus');
 
-  async function connectWallet() {
-    // Prüfen, ob Wallet Extensions verfügbar sind
-    if (window.solana) {
+    connectBtn.addEventListener('click', async () => {
       try {
-        // Phantom / Solflare Adapter automatisch erkennen
-        const wallet = window.solana;
-        if (!wallet.isConnected) {
-          const resp = await wallet.connect();
-          walletStatus.innerText = `Connected: ${resp.publicKey.toString()}`;
-          connectButton.innerText = "Wallet Connected";
-          connectButton.disabled = true;
-        } else {
-          walletStatus.innerText = `Already connected: ${wallet.publicKey.toString()}`;
-          connectButton.innerText = "Wallet Connected";
-          connectButton.disabled = true;
-        }
+        if (!window.solana) throw new Error('Solana wallet not found');
+        const resp = await window.solana.connect();
+        statusEl.textContent = `Connected: ${resp.publicKey.toString()}`;
       } catch (err) {
-        walletStatus.innerText = `Connection failed: ${err.message}`;
+        console.error(err);
+        statusEl.textContent = 'Connection failed';
       }
-    } else {
-      walletStatus.innerHTML = `No Solana wallet detected.<br/><a href="https://phantom.app/" target="_blank" class="underline text-[#2EC4B6]">Install Phantom Wallet</a>`;
-    }
-  }
-
-  connectButton.addEventListener("click", connectWallet);
-
-  // Optional: automatisch Wallet Status anzeigen, wenn bereits verbunden
-  window.addEventListener('load', () => {
-    if (window.solana?.isConnected) {
-      walletStatus.innerText = `Connected: ${window.solana.publicKey.toString()}`;
-      connectButton.innerText = "Wallet Connected";
-      connectButton.disabled = true;
-    }
-  });
-</script>
+    });
+  </script>
 
 </body>
 </html>
