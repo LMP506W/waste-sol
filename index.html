@@ -1,72 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>WASTE SOL</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>WASTE SOL V1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
+<!-- Styles -->
+<link rel="stylesheet" href="style.css">
 
-  <!-- Favicon / Tab Icon -->
-  <link rel="icon" type="image/png" href="wastesol.png.png">
-  <link rel="apple-touch-icon" href="wastesol.png.png">
-  <meta name="theme-color" content="#0f0f0f">
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="wastesol.png.png">
+<link rel="apple-touch-icon" href="wastesol.png.png">
+<meta name="theme-color" content="#0f0f0f">
 </head>
 
 <body>
 
-  <!-- Hero / Logo + Open Wallet -->
-  <section class="hero">
-    <div class="container">
-      <div id="logo">WASTE</div>
-      <button id="openWalletBtn" class="btn connect">Open Wallet</button>
-      <div id="walletStatus">No wallet selected</div>
-    </div>
-  </section>
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div id="logo">WASTE</div>
+    <button id="connectBtn" class="btn connect">Connect Phantom Wallet</button>
+    <div id="walletStatus">Not connected</div>
+  </div>
+</section>
 
-  <!-- Waste SOL Section -->
-  <section class="waste-section">
-    <div class="container">
-      <h2>💸 Waste your SOL 💸</h2>
-      <input
-        id="amount"
-        type="number"
-        placeholder="Amount in SOL"
-        min="0.001"
-        step="0.001"
-      />
-      <button id="payBtn" class="btn pay" disabled>Waste SOL</button>
-      <p class="small-text">
-        Money goes nowhere. Totally wasted. Fun guaranteed. 😎
-      </p>
-    </div>
-  </section>
+<!-- Waste SOL Section -->
+<section class="waste-section">
+  <div class="container">
+    <h2>💸 Waste your SOL 💸</h2>
+    <input id="amount" type="number" placeholder="Amount in SOL" min="0.001" step="0.001"/>
+    <button id="payBtn" class="btn pay" disabled>Waste SOL</button>
+    <p class="small-text">Money goes nowhere. Totally wasted. Fun guaranteed. 😎</p>
+  </div>
+</section>
 
-  <!-- Info / Parallax Section -->
-  <section class="info-section">
-    <div class="container info-container">
-      <h2>What We Do</h2>
-      <p>
-        WASTE is a playful Solana experiment. Users can send SOL to nowhere,
-        watch it launch, and enjoy a futuristic animation.
-        All transactions are real on-chain, but the SOL literally goes into the void.
-      </p>
-      <p>
-        Have fun, waste responsibly, and enjoy the neon rocket experience!
-      </p>
-    </div>
-  </section>
+<!-- Info Section -->
+<section class="info-section">
+  <div class="container info-container">
+    <h2>What We Do</h2>
+    <p>
+      WASTE is a playful Solana experiment. Users can send SOL to nowhere,
+      watch it launch into a cosmic black hole, and enjoy crazy animations.
+      All transactions are real on-chain, but the SOL literally goes into the void.
+    </p>
+    <p>
+      Each SOL wasted increases your level, unlocks new effects, and triggers AI reactions!
+    </p>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <section class="footer">
-    <div class="container">
-      <p>Money goes nowhere. Just WASTE it. 🚀</p>
-    </div>
-  </section>
+<!-- Footer -->
+<section class="footer">
+  <div class="container">
+    <p>Money goes nowhere. Just WASTE it. 🚀</p>
+  </div>
+</section>
 
-  <!-- Scripts -->
-  <script src="script.js"></script>
-  <script src="parallax.js"></script>
+<!-- Scripts -->
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
