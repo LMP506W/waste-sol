@@ -1,31 +1,65 @@
-const openWalletBtn = document.getElementById("openWalletBtn");
-const wasteBtn = document.getElementById("payBtn");
-const amountInput = document.getElementById("amount");
-const walletStatus = document.getElementById("walletStatus");
+// ===============================
+// WASTE SOL – Native Solana Wallet Connect
+// ===============================
 
+const connectBtn = document.getElementById("connectBtn");
+const payBtn = document.getElementById("payBtn");
+const walletStatus = document.getElementById("walletStatus");
+const amountInput = document.getElementById("amount");
+
+// DEINE WALLET ADRESSE
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
-let walletOpened = false;
+// Solana Connection
+const connection = new solanaWeb3.Connection(
+  solanaWeb3.clusterApiUrl("mainnet-beta"),
+  "confirmed"
+);
 
-// Initial state
-wasteBtn.disabled = true;
-walletStatus.innerText = "No wallet selected";
+let userPublicKey = null;
 
-// ----------------------
-// Open Wallet (NO CONNECT)
-// ----------------------
-openWalletBtn.addEventListener("click", () => {
-  walletOpened = true;
-  walletStatus.innerText = "Wallet ready";
-  wasteBtn.disabled = false;
+// ===============================
+// Helpers
+// ===============================
+function isPhantomInstalled() {
+  return window.solana && window.solana.isPhantom;
+}
+
+function shortKey(pk) {
+  return pk.slice(0, 4) + "..." + pk.slice(-4);
+}
+
+// ===============================
+// CONNECT PHANTOM / SOLANA WALLET
+// ===============================
+connectBtn.addEventListener("click", async () => {
+  if (!isPhantomInstalled()) {
+    alert("Please open this site inside the Phantom Wallet browser.");
+    return;
+  }
+
+  try {
+    const resp = await window.solana.connect();
+    userPublicKey = resp.publicKey;
+
+    walletStatus.innerText =
+      "Connected: " + shortKey(userPublicKey.toString());
+
+    connectBtn.innerText = "Connected";
+    connectBtn.disabled = true;
+    payBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    walletStatus.innerText = "Connection rejected";
+  }
 });
 
-// ----------------------
-// Waste SOL
-// ----------------------
-wasteBtn.addEventListener("click", () => {
-  if (!walletOpened) {
-    alert("Open a wallet first.");
+// ===============================
+// Waste SOL – nur bei erfolgreicher TX
+// ===============================
+payBtn.addEventListener("click", async () => {
+  if (!userPublicKey) {
+    alert("Connect Phantom first!");
     return;
   }
 
@@ -37,73 +71,123 @@ wasteBtn.addEventListener("click", () => {
 
   const ok = confirm(
     `⚠️ WARNING ⚠️\n\n` +
-    `You are about to send ${amount} SOL from YOUR wallet.\n` +
+    `You are about to send ${amount} SOL.\n` +
     `This transaction is REAL and IRREVERSIBLE.\n\n` +
-    `Continue?`
+    `Do you want to continue?`
   );
 
   if (!ok) return;
 
-  const label = encodeURIComponent("WASTE SOL");
-  const message = encodeURIComponent("Money goes nowhere.");
-  const url = `solana:${WALLET_ADDRESS}?amount=${amount}&label=${label}&message=${message}`;
+  try {
+    // Transaction erstellen
+    const transaction = new solanaWeb3.Transaction().add(
+      solanaWeb3.SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
+        lamports: Math.floor(amount * 1e9),
+      })
+    );
 
-  // This opens the user's wallet
-  window.location.href = url;
+    transaction.feePayer = userPublicKey;
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
 
-  setTimeout(launchRocket, 2000);
+    // TX signieren und senden
+    const signedTx = await window.solana.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+    // Warten auf Bestätigung
+    await connection.confirmTransaction(signature, "confirmed");
+
+    // TX erfolgreich → Black Hole Animation starten
+    launchBlackHole(amount);
+
+    // Optional: Total Counter
+    updateTotalCounter(amount);
+
+  } catch (err) {
+    console.error(err);
+    alert("Transaction cancelled or failed.");
+  }
 });
 
-// ----------------------
-// Rocket Animation
-// ----------------------
-function launchRocket() {
+// ===============================
+// Black Hole Animation
+// ===============================
+function launchBlackHole(amount) {
   const canvas = document.createElement("canvas");
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
-  canvas.style.background = "#0b0b0b";
-  canvas.style.zIndex = "9999";
-
   document.body.innerHTML = "";
   document.body.appendChild(canvas);
 
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   const ctx = canvas.getContext("2d");
-  let countdown = 5;
 
-  const timer = setInterval(() => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let centerX = canvas.width / 2;
+  let centerY = canvas.height / 2;
+  let particles = [];
+  let particleCount = 1000; // für 4K/High Detail
+
+  // Init particles
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2 + 1,
+      angle: Math.random() * Math.PI * 2,
+      speed: Math.random() * 4 + 1
+    });
+  }
+
+  function draw() {
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Black hole center
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+    ctx.fillStyle = "#0f0f0f";
+    ctx.fill();
+    ctx.strokeStyle = "#14f195";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Particles
+    particles.forEach(p => {
+      let dx = centerX - p.x;
+      let dy = centerY - p.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      let pull = 10 / (dist + 0.1); // stronger closer
+      p.x += dx * 0.01 + Math.cos(p.angle) * p.speed * 0.05;
+      p.y += dy * 0.01 + Math.sin(p.angle) * p.speed * 0.05;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = "#14f195";
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  // Text overlay nach 5 Sekunden
+  setTimeout(() => {
     ctx.fillStyle = "#14f195";
     ctx.font = "bold 72px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(
-      countdown > 0 ? countdown : "🚀",
-      canvas.width / 2,
-      canvas.height / 2
-    );
-    countdown--;
-    if (countdown < 0) clearInterval(timer);
-  }, 1000);
+    ctx.fillText(`${amount} SOL WASTED`, centerX, centerY);
+    ctx.fillText("BLACK HOLE SUCCESS 🚀", centerX, centerY + 100);
+  }, 5000);
+}
 
-  setTimeout(() => {
-    let y = canvas.height;
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#14f195";
-      ctx.beginPath();
-      ctx.moveTo(canvas.width / 2, y);
-      ctx.lineTo(canvas.width / 2 - 16, y + 40);
-      ctx.lineTo(canvas.width / 2 + 16, y + 40);
-      ctx.closePath();
-      ctx.fill();
-      y -= 8;
-      if (y > -60) requestAnimationFrame(animate);
-      else {
-        ctx.fillText("SOL WASTED", canvas.width / 2, canvas.height / 2);
-      }
-    }
-    animate();
-  }, 6000);
+// ===============================
+// Optional: Total SOL Wasted Counter
+// ===============================
+let totalWasted = 0;
+function updateTotalCounter(amount) {
+  totalWasted += amount;
+  console.log("Total SOL Wasted:", totalWasted.toFixed(3));
 }
