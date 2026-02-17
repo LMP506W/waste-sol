@@ -1,11 +1,9 @@
-// ==================================
-// WASTE SOL V1 – Wallet + Black Hole + Level + Mini-Games + KI
-// ==================================
-
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
+const levelCounter = document.getElementById("levelCounter");
+const totalWastedDisplay = document.getElementById("totalWasted");
 
 // DEINE WALLET
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
@@ -20,9 +18,7 @@ let userPublicKey = null;
 let playerLevel = 0;
 let totalWasted = 0;
 
-// ==========================
 // Helpers
-// ==========================
 function isPhantomInstalled() {
   return window.solana && window.solana.isPhantom;
 }
@@ -31,9 +27,12 @@ function shortKey(pk) {
   return pk.slice(0, 4) + "..." + pk.slice(-4);
 }
 
-// ==========================
+function updateHUD() {
+  levelCounter.innerText = `Level: ${playerLevel}`;
+  totalWastedDisplay.innerText = `SOL Wasted: ${totalWasted.toFixed(3)}`;
+}
+
 // Connect Wallet
-// ==========================
 connectBtn.addEventListener("click", async () => {
   if (!isPhantomInstalled()) {
     alert("Please open this site inside Phantom Wallet browser.");
@@ -53,9 +52,7 @@ connectBtn.addEventListener("click", async () => {
   }
 });
 
-// ==========================
 // Waste SOL
-// ==========================
 payBtn.addEventListener("click", async () => {
   if (!userPublicKey) {
     alert("Connect Phantom first!");
@@ -69,6 +66,13 @@ payBtn.addEventListener("click", async () => {
   }
 
   try {
+    // Prüfen, ob genug SOL vorhanden
+    const balance = await connection.getBalance(userPublicKey);
+    if (balance < amount * 1e9) {
+      alert("Not enough SOL to waste!");
+      return;
+    }
+
     const tx = new solanaWeb3.Transaction().add(
       solanaWeb3.SystemProgram.transfer({
         fromPubkey: userPublicKey,
@@ -89,7 +93,8 @@ payBtn.addEventListener("click", async () => {
 
     // Update Stats
     totalWasted += amount;
-    playerLevel = Math.floor(totalWasted); // 1 Level pro 1 SOL wasted
+    playerLevel = Math.floor(totalWasted); // 1 Level pro SOL
+    updateHUD();
 
     // Trigger Animation / Mini-Games / AI
     triggerBlackHole(amount);
@@ -102,21 +107,26 @@ payBtn.addEventListener("click", async () => {
   }
 });
 
-// ==========================
-// Black Hole Animation
-// ==========================
+// Black Hole Animation (Overlay)
 function triggerBlackHole(amount) {
-  const canvas = document.createElement("canvas");
-  document.body.innerHTML = "";
-  document.body.appendChild(canvas);
+  let canvas = document.getElementById("bhCanvas");
+  if (!canvas) {
+    canvas = document.createElement("canvas");
+    canvas.id = "bhCanvas";
+    canvas.style.position = "fixed";
+    canvas.style.top = 0;
+    canvas.style.left = 0;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.zIndex = 999;
+    canvas.style.pointerEvents = "none"; // Buttons klickbar
+    document.body.appendChild(canvas);
+  }
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
   const ctx = canvas.getContext("2d");
-
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const particleCount = 800 + playerLevel * 50;
+  const particleCount = 600 + playerLevel * 50;
   const particles = [];
 
   for (let i = 0; i < particleCount; i++) {
@@ -130,7 +140,7 @@ function triggerBlackHole(amount) {
   }
 
   function draw() {
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.beginPath();
@@ -163,27 +173,22 @@ function triggerBlackHole(amount) {
   // Overlay Text
   setTimeout(() => {
     ctx.fillStyle = "#14f195";
-    ctx.font = "bold 72px monospace";
+    ctx.font = "bold 60px monospace";
     ctx.textAlign = "center";
     ctx.fillText(`${amount} SOL WASTED`, centerX, centerY);
-    ctx.fillText(`Level ${playerLevel} achieved!`, centerX, centerY + 100);
-  }, 4000);
+    ctx.fillText(`Level ${playerLevel}`, centerX, centerY + 80);
+  }, 3000);
 }
 
-// ==========================
 // Random Event Mini-Game
-// ==========================
 function triggerRandomEvent(amount) {
   const chance = Math.random();
   if (chance < 0.2) {
     alert("🌌 Lucky Event Triggered! Cosmic Glitch!");
-    // TODO: weitere Effekte / Mini-Games
   }
 }
 
-// ==========================
 // AI Feedback / Meme
-// ==========================
 function triggerAIReaction(amount) {
   const messages = [
     `You just threw ${amount} SOL into the void!`,
@@ -193,5 +198,4 @@ function triggerAIReaction(amount) {
   ];
   const msg = messages[Math.floor(Math.random() * messages.length)];
   console.log("AI Reaction:", msg);
-  // TODO: Overlay Text / Meme auf Canvas oder TTS
 }
