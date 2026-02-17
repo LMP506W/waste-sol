@@ -4,15 +4,14 @@ const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
 
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com";
-const connection = new solanaWeb3.Connection(RPC_ENDPOINT, 'confirmed');
+const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
 
 let userPublicKey = null;
 
 // Phantom check
 function hasPhantom() { return window.solana && window.solana.isPhantom; }
 
-// Update Wallet Status UI
+// Update wallet status
 async function updateWalletStatus() {
   if(!userPublicKey) {
     walletStatus.innerText = "Not connected";
@@ -23,14 +22,14 @@ async function updateWalletStatus() {
   walletStatus.innerText = `Connected: ${balanceSOL} SOL`;
 }
 
-// Sketch Rocket
+// Sketch rocket
 function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
+  canvas.style.top = 0;
+  canvas.style.left = 0;
   canvas.style.background = "#0f0f0f";
   document.body.innerHTML = "";
   document.body.appendChild(canvas);
@@ -54,6 +53,7 @@ function launchRocket() {
     function drawRocket() {
       ctx.fillStyle = "#0f0f0f";
       ctx.fillRect(0,0,canvas.width,canvas.height);
+
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY);
@@ -61,6 +61,7 @@ function launchRocket() {
       ctx.lineTo(rocketX+10, rocketY+30);
       ctx.closePath();
       ctx.fill();
+
       ctx.fillStyle = "#fff";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY+30);
@@ -68,6 +69,7 @@ function launchRocket() {
       ctx.lineTo(rocketX+5, rocketY+45);
       ctx.closePath();
       ctx.fill();
+
       rocketY -= 5;
       if(rocketY + 45 > 0) requestAnimationFrame(drawRocket);
       else {
@@ -83,7 +85,7 @@ function launchRocket() {
   }, 6000);
 }
 
-// ===== Connect Button =====
+// Connect Phantom
 connectBtn.addEventListener("click", async () => {
   if(!hasPhantom()) return alert("Install Phantom Wallet first!");
   try {
@@ -97,13 +99,12 @@ connectBtn.addEventListener("click", async () => {
   }
 });
 
-// ===== Waste SOL Button =====
+// Waste SOL
 payBtn.addEventListener("click", async () => {
   if(!userPublicKey) return alert("Connect Phantom first!");
   const amount = parseFloat(amountInput.value);
   if(!amount || amount <= 0) return alert("Enter valid SOL amount");
 
-  // Create transaction
   const transaction = new solanaWeb3.Transaction().add(
     solanaWeb3.SystemProgram.transfer({
       fromPubkey: userPublicKey,
@@ -113,11 +114,10 @@ payBtn.addEventListener("click", async () => {
   );
 
   try {
-    // Phantom Sign + Send (Widget)
     const { signature } = await window.solana.signAndSendTransaction(transaction);
     console.log("TX sent:", signature);
 
-    // Polling until confirmed
+    // Wait for confirmation
     let confirmed = false;
     let tries = 0;
     while(!confirmed && tries < 20) {
@@ -128,9 +128,9 @@ payBtn.addEventListener("click", async () => {
     }
 
     if(confirmed) launchRocket();
-    else alert("Transaction not confirmed, try again.");
+    else alert("Transaction not confirmed");
 
-    await updateWalletStatus(); // Update balance
+    await updateWalletStatus();
   } catch(e) {
     console.log(e);
     alert("Transaction failed or rejected");
