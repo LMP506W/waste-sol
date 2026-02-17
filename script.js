@@ -1,43 +1,62 @@
-const payBtn = document.getElementById("payBtn");
+const openWalletBtn = document.getElementById("openWalletBtn");
+const wasteBtn = document.getElementById("payBtn");
 const amountInput = document.getElementById("amount");
+const walletStatus = document.getElementById("walletStatus");
 
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
-payBtn.disabled = false;
+let walletOpened = false;
 
-payBtn.addEventListener("click", () => {
+// Initial state
+wasteBtn.disabled = true;
+walletStatus.innerText = "No wallet selected";
+
+// ----------------------
+// Open Wallet (NO CONNECT)
+// ----------------------
+openWalletBtn.addEventListener("click", () => {
+  walletOpened = true;
+  walletStatus.innerText = "Wallet ready";
+  wasteBtn.disabled = false;
+});
+
+// ----------------------
+// Waste SOL
+// ----------------------
+wasteBtn.addEventListener("click", () => {
+  if (!walletOpened) {
+    alert("Open a wallet first.");
+    return;
+  }
+
   const amount = parseFloat(amountInput.value);
-
   if (!amount || amount <= 0) {
     alert("Enter a valid SOL amount.");
     return;
   }
 
-  // ⚠️ WARNING
   const ok = confirm(
     `⚠️ WARNING ⚠️\n\n` +
-    `You are about to send ${amount} SOL.\n` +
+    `You are about to send ${amount} SOL from YOUR wallet.\n` +
     `This transaction is REAL and IRREVERSIBLE.\n\n` +
-    `Do you want to continue?`
+    `Continue?`
   );
 
   if (!ok) return;
 
-  // Solana Pay Link (wallet-agnostic)
   const label = encodeURIComponent("WASTE SOL");
   const message = encodeURIComponent("Money goes nowhere.");
   const url = `solana:${WALLET_ADDRESS}?amount=${amount}&label=${label}&message=${message}`;
 
-  // Open wallet
+  // This opens the user's wallet
   window.location.href = url;
 
-  // Start rocket anyway (fun concept)
   setTimeout(launchRocket, 2000);
 });
 
-// ===============================
-// ROCKET ANIMATION
-// ===============================
+// ----------------------
+// Rocket Animation
+// ----------------------
 function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -70,7 +89,6 @@ function launchRocket() {
 
   setTimeout(() => {
     let y = canvas.height;
-
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#14f195";
@@ -80,21 +98,12 @@ function launchRocket() {
       ctx.lineTo(canvas.width / 2 + 16, y + 40);
       ctx.closePath();
       ctx.fill();
-
       y -= 8;
-
-      if (y > -60) {
-        requestAnimationFrame(animate);
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillText(
-          "SOL WASTED",
-          canvas.width / 2,
-          canvas.height / 2
-        );
+      if (y > -60) requestAnimationFrame(animate);
+      else {
+        ctx.fillText("SOL WASTED", canvas.width / 2, canvas.height / 2);
       }
     }
-
     animate();
   }, 6000);
 }
