@@ -1,10 +1,9 @@
 const payBtn = document.getElementById("payBtn");
 const amountInput = document.getElementById("amount");
 
-// ⛔️ HIER DEINE EIGENE SOL WALLET ADRESSE EINTRAGEN
+// 🔴 HIER DEINE ECHTE SOLANA ADRESSE
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
-// Wallet Check
 function hasPhantom() {
   return window.solana && window.solana.isPhantom;
 }
@@ -18,45 +17,42 @@ payBtn.addEventListener("click", async () => {
   }
 
   if (!hasPhantom()) {
-    alert("no wallet. no waste.");
+    alert("install phantom wallet first.");
     return;
   }
 
-  // Optional: Wallet verbinden
+  // Wallet verbinden (wichtig!)
   try {
-    await window.solana.connect();
-  } catch (err) {
-    alert("wallet rejected.");
+    await window.solana.connect({ onlyIfTrusted: false });
+  } catch {
+    alert("wallet connection rejected.");
     return;
   }
 
-  // Fake loading screen
-  document.body.innerHTML = `
-    <div style="
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-family:monospace;
-      font-size:1.5rem;
-      background:black;
-      color:#14f195;
-    ">
-      wasting...
-    </div>
+  // Fake loading (aber Seite bleibt intakt)
+  const overlay = document.createElement("div");
+  overlay.style = `
+    position:fixed;
+    inset:0;
+    background:black;
+    color:#14f195;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:monospace;
+    font-size:1.5rem;
+    z-index:9999;
   `;
+  overlay.innerText = "wasting...";
+  document.body.appendChild(overlay);
 
-  // Solana Pay Link
+  // Phantom öffnen (USER INITIIERT → Browser erlaubt)
   const payUrl = `solana:${WALLET_ADDRESS}?amount=${amount}`;
+  window.open(payUrl, "_self");
 
-  // Wallet öffnen
-  setTimeout(() => {
-    window.location.href = payUrl;
-  }, 1200);
-
-  // Eskalation → Weißer Bildschirm
+  // Weiß erst NACH Wallet-Öffnung
   setTimeout(() => {
     document.body.innerHTML = "";
     document.body.style.background = "white";
-  }, 4000);
+  }, 6000);
 });
