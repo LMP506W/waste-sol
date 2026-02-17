@@ -1,9 +1,16 @@
+// ===============================
+// WASTE SOL – Phantom Safe Script
+// ===============================
+
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
 
+// DEINE WALLET ADRESSE
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+
+// Solana Connection
 const connection = new solanaWeb3.Connection(
   solanaWeb3.clusterApiUrl("mainnet-beta"),
   "confirmed"
@@ -11,10 +18,10 @@ const connection = new solanaWeb3.Connection(
 
 let userPublicKey = null;
 
-// --------------------
+// ===============================
 // Helpers
-// --------------------
-function hasPhantom() {
+// ===============================
+function isPhantomInstalled() {
   return window.solana && window.solana.isPhantom;
 }
 
@@ -22,47 +29,38 @@ function shortKey(pk) {
   return pk.slice(0, 4) + "..." + pk.slice(-4);
 }
 
-// --------------------
-// Wallet Status
-// --------------------
-async function updateWalletStatus() {
-  if (!userPublicKey) {
-    walletStatus.innerText = "Not connected";
-    return;
-  }
-  const balanceLamports = await connection.getBalance(userPublicKey);
-  const balanceSOL = (balanceLamports / 1e9).toFixed(4);
-  walletStatus.innerText = `Connected: ${balanceSOL} SOL (${shortKey(userPublicKey.toString())})`;
-}
-
-// --------------------
-// Connect Phantom
-// --------------------
+// ===============================
+// CONNECT PHANTOM (NO OPTIONS)
+// ===============================
 connectBtn.addEventListener("click", async () => {
-  if (!hasPhantom()) {
-    alert("Phantom Wallet not detected.\nOpen this site inside Phantom Browser.");
+  if (!isPhantomInstalled()) {
+    alert("Please open this site inside the Phantom Wallet browser.");
     return;
   }
 
   try {
-    const resp = await window.solana.connect({ onlyIfTrusted: false });
+    // WICHTIG: KEINE Optionen!
+    const resp = await window.solana.connect();
     userPublicKey = resp.publicKey;
-    await updateWalletStatus();
-    payBtn.disabled = false;
-    connectBtn.innerText = "Wallet Connected";
+
+    walletStatus.innerText =
+      "Connected: " + shortKey(userPublicKey.toString());
+
+    connectBtn.innerText = "Connected";
     connectBtn.disabled = true;
+    payBtn.disabled = false;
   } catch (err) {
     console.error(err);
     walletStatus.innerText = "Connection rejected";
   }
 });
 
-// --------------------
-// Waste SOL
-// --------------------
+// ===============================
+// WASTE SOL (TX STEP)
+// ===============================
 payBtn.addEventListener("click", async () => {
   if (!userPublicKey) {
-    alert("Connect Phantom first.");
+    alert("Connect Phantom Wallet first.");
     return;
   }
 
@@ -72,14 +70,19 @@ payBtn.addEventListener("click", async () => {
     return;
   }
 
-  // ⚠️ VERY IMPORTANT WARNING (UX + Phantom Trust)
-  const confirmWaste = confirm(
-    `⚠️ WARNING ⚠️\n\nYou are about to send ${amount} SOL.\nThis transaction is REAL and NON-REVERSIBLE.\nThe SOL will be permanently wasted.\n\nDo you want to continue?`
+  // ⚠️ USER WARNING (EXTREM WICHTIG)
+  const ok = confirm(
+    `⚠️ WARNING ⚠️\n\n` +
+    `You are about to send ${amount} SOL.\n` +
+    `This transaction is REAL and IRREVERSIBLE.\n` +
+    `The SOL will be permanently wasted.\n\n` +
+    `Do you want to continue?`
   );
 
-  if (!confirmWaste) return;
+  if (!ok) return;
 
   try {
+    // Create Transaction
     const transaction = new solanaWeb3.Transaction().add(
       solanaWeb3.SystemProgram.transfer({
         fromPubkey: userPublicKey,
@@ -92,24 +95,25 @@ payBtn.addEventListener("click", async () => {
     const { blockhash } = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
 
-    const signed = await window.solana.signTransaction(transaction);
-    const signature = await connection.sendRawTransaction(signed.serialize());
+    // Sign & Send
+    const signedTx = await window.solana.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(
+      signedTx.serialize()
+    );
 
     await connection.confirmTransaction(signature, "confirmed");
 
-    // Success → Rocket
+    // SUCCESS → ROCKET
     launchRocket();
-
-    await updateWalletStatus();
   } catch (err) {
     console.error(err);
     alert("Transaction cancelled or failed.");
   }
 });
 
-// --------------------
-// Rocket Animation
-// --------------------
+// ===============================
+// ROCKET ANIMATION (AFTER TX ONLY)
+// ===============================
 function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -131,28 +135,42 @@ function launchRocket() {
     ctx.fillStyle = "#14f195";
     ctx.font = "bold 72px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(countdown > 0 ? countdown : "🚀", canvas.width / 2, canvas.height / 2);
+    ctx.fillText(
+      countdown > 0 ? countdown : "🚀",
+      canvas.width / 2,
+      canvas.height / 2
+    );
     countdown--;
     if (countdown < 0) clearInterval(timer);
   }, 1000);
 
   setTimeout(() => {
     let y = canvas.height;
+
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(canvas.width / 2, y);
-      ctx.lineTo(canvas.width / 2 - 15, y + 40);
-      ctx.lineTo(canvas.width / 2 + 15, y + 40);
+      ctx.lineTo(canvas.width / 2 - 16, y + 40);
+      ctx.lineTo(canvas.width / 2 + 16, y + 40);
       ctx.closePath();
       ctx.fill();
+
       y -= 8;
-      if (y > -60) requestAnimationFrame(animate);
-      else {
-        ctx.fillText("SOL WASTED SUCCESSFULLY", canvas.width / 2, canvas.height / 2);
+
+      if (y > -60) {
+        requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillText(
+          "SOL WASTED SUCCESSFULLY",
+          canvas.width / 2,
+          canvas.height / 2
+        );
       }
     }
+
     animate();
   }, 6000);
 }
