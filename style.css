@@ -1,0 +1,75 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: monospace;
+}
+
+body {
+  height: 100vh;
+  background: radial-gradient(
+    circle at top,
+    #14f195,
+    #0f0f0f 60%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+#app {
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  letter-spacing: 0.05em;
+}
+
+.card {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 2rem;
+  border-radius: 8px;
+  min-width: 280px;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+input {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  background: #000;
+  border: 1px solid #14f195;
+  color: #14f195;
+  font-size: 1rem;
+  text-align: center;
+}
+
+button {
+  width: 100%;
+  padding: 0.8rem;
+  background: #14f195;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: #0ce3a7;
+}
+
+.hint {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  opacity: 0.5;
+}
