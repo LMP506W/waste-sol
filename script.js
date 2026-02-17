@@ -1,29 +1,34 @@
 const payBtn = document.getElementById("payBtn");
 const amountInput = document.getElementById("amount");
 
-// DEINE WALLET
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com";
 
-// Phantom Check
+const connection = new solanaWeb3.Connection(RPC_ENDPOINT, 'confirmed');
+
 function hasPhantom() {
   return window.solana && window.solana.isPhantom;
 }
 
-// PAY BUTTON
-payBtn.addEventListener("click", async () => {
-  const amount = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) return alert("Enter valid amount.");
+// Prüft letzte 20 TX an die Wallet
+async function txConfirmed(amount) {
+  const pubKey = new solanaWeb3.PublicKey(WALLET_ADDRESS);
+  const sigs = await connection.getSignaturesForAddress(pubKey, { limit: 20 });
 
-  if (!hasPhantom()) return alert("Install Phantom wallet first.");
+  for (let s of sigs) {
+    const tx = await connection.getTransaction(s.signature);
+    if (!tx || !tx.meta) continue;
+    // Check SOL transfer
+    const pre = tx.meta.preBalances;
+    const post = tx.meta.postBalances;
+    const diff = post[0] - pre[0]; // Lamports
+    if (diff >= amount * 1e9) return true;
+  }
+  return false;
+}
 
-  try { await window.solana.connect({ onlyIfTrusted: false }); } 
-  catch { return alert("Wallet rejected."); }
-
-  // SOL Payment Link (öffnet Phantom)
-  const payUrl = `solana:${WALLET_ADDRESS}?amount=${amount}`;
-  window.open(payUrl, "_self");
-
-  // CANVAS OVERLAY für Rakete
+// Canvas Sketch Rakete
+function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -35,9 +40,9 @@ payBtn.addEventListener("click", async () => {
   document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
-  // Countdown 5...4...3...
+  // Countdown
   let countdown = 5;
-  const countdownInterval = setInterval(() => {
+  const cdInterval = setInterval(() => {
     ctx.fillStyle = "#0f0f0f";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle = "#14f195";
@@ -45,19 +50,17 @@ payBtn.addEventListener("click", async () => {
     ctx.textAlign = "center";
     ctx.fillText(countdown > 0 ? countdown : "", canvas.width/2, canvas.height/2);
     countdown--;
-    if(countdown < 0) clearInterval(countdownInterval);
+    if(countdown < 0) clearInterval(cdInterval);
   }, 1000);
 
-  // kleine delay bis Rakete startet
+  // Start Rakete nach Countdown
   setTimeout(() => {
     let rocketY = canvas.height - 50;
     const rocketX = canvas.width / 2;
-
     function drawRocket() {
       ctx.fillStyle = "#0f0f0f";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // Rakete
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY);
@@ -66,7 +69,6 @@ payBtn.addEventListener("click", async () => {
       ctx.closePath();
       ctx.fill();
 
-      // Flamme
       ctx.fillStyle = "#fff";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY+30);
@@ -76,21 +78,40 @@ payBtn.addEventListener("click", async () => {
       ctx.fill();
 
       rocketY -= 5;
-
       if(rocketY + 45 > 0) requestAnimationFrame(drawRocket);
-      else showSuccess();
+      else {
+        ctx.fillStyle = "#0f0f0f";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#14f195";
+        ctx.font = "60px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("Solana Wasted Success 🚀", canvas.width/2, canvas.height/2);
+      }
     }
-
     drawRocket();
-  }, 6000); // countdown 5s + small delay
+  }, 6000);
+}
 
-  // Show final success
-  function showSuccess() {
-    ctx.fillStyle = "#0f0f0f";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = "#14f195";
-    ctx.font = "60px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("Solana Wasted Success 🚀", canvas.width/2, canvas.height/2);
-  }
+payBtn.addEventListener("click", async () => {
+  const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) return alert("Enter valid amount.");
+  if (!hasPhantom()) return alert("Install Phantom wallet first.");
+
+  try { await window.solana.connect({ onlyIfTrusted: false }); }
+  catch { return alert("Wallet rejected."); }
+
+  // Phantom Payment Link
+  const payUrl = `solana:${WALLET_ADDRESS}?amount=${amount}`;
+  window.open(payUrl, "_self");
+
+  // Polling: check every 3s, max 30s
+  let tries = 0;
+  const poll = setInterval(async () => {
+    tries++;
+    const confirmed = await txConfirmed(amount);
+    if (confirmed || tries > 10) { // max ~30s
+      clearInterval(poll);
+      launchRocket();
+    }
+  }, 3000);
 });
