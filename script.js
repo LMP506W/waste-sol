@@ -1,5 +1,6 @@
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
+const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
 
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
@@ -8,12 +9,21 @@ const connection = new solanaWeb3.Connection(RPC_ENDPOINT, 'confirmed');
 
 let userPublicKey = null;
 
-// Phantom Check
-function hasPhantom() {
-  return window.solana && window.solana.isPhantom;
+// Phantom check
+function hasPhantom() { return window.solana && window.solana.isPhantom; }
+
+// Update Wallet Status UI
+async function updateWalletStatus() {
+  if(!userPublicKey) {
+    walletStatus.innerText = "Not connected";
+    return;
+  }
+  const balanceLamports = await connection.getBalance(userPublicKey);
+  const balanceSOL = (balanceLamports / 1e9).toFixed(4);
+  walletStatus.innerText = `Connected: ${balanceSOL} SOL`;
 }
 
-// Sketch Rakete
+// Sketch Rocket
 function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -26,7 +36,6 @@ function launchRocket() {
   document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
-  // Countdown
   let countdown = 5;
   const cdInterval = setInterval(() => {
     ctx.fillStyle = "#0f0f0f";
@@ -39,14 +48,12 @@ function launchRocket() {
     if(countdown < 0) clearInterval(cdInterval);
   }, 1000);
 
-  // Start Rakete nach Countdown
   setTimeout(() => {
     let rocketY = canvas.height - 50;
     const rocketX = canvas.width / 2;
     function drawRocket() {
       ctx.fillStyle = "#0f0f0f";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY);
@@ -54,7 +61,6 @@ function launchRocket() {
       ctx.lineTo(rocketX+10, rocketY+30);
       ctx.closePath();
       ctx.fill();
-
       ctx.fillStyle = "#fff";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY+30);
@@ -62,7 +68,6 @@ function launchRocket() {
       ctx.lineTo(rocketX+5, rocketY+45);
       ctx.closePath();
       ctx.fill();
-
       rocketY -= 5;
       if(rocketY + 45 > 0) requestAnimationFrame(drawRocket);
       else {
@@ -80,23 +85,25 @@ function launchRocket() {
 
 // ===== Connect Button =====
 connectBtn.addEventListener("click", async () => {
-  if (!hasPhantom()) return alert("Install Phantom wallet first.");
+  if(!hasPhantom()) return alert("Install Phantom Wallet first!");
   try {
     const resp = await window.solana.connect();
     userPublicKey = resp.publicKey;
-    alert("Wallet connected: " + userPublicKey.toString());
+    await updateWalletStatus();
+    payBtn.disabled = false;
   } catch(e) {
-    alert("Wallet connection rejected.");
+    console.log(e);
+    walletStatus.innerText = "Wallet connection rejected";
   }
 });
 
 // ===== Waste SOL Button =====
 payBtn.addEventListener("click", async () => {
-  if (!userPublicKey) return alert("Connect Phantom first!");
+  if(!userPublicKey) return alert("Connect Phantom first!");
   const amount = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) return alert("Enter a valid amount.");
+  if(!amount || amount <= 0) return alert("Enter valid SOL amount");
 
-  // Create Transaction
+  // Create transaction
   const transaction = new solanaWeb3.Transaction().add(
     solanaWeb3.SystemProgram.transfer({
       fromPubkey: userPublicKey,
@@ -106,6 +113,7 @@ payBtn.addEventListener("click", async () => {
   );
 
   try {
+    // Phantom Sign + Send (Widget)
     const { signature } = await window.solana.signAndSendTransaction(transaction);
     console.log("TX sent:", signature);
 
@@ -122,8 +130,9 @@ payBtn.addEventListener("click", async () => {
     if(confirmed) launchRocket();
     else alert("Transaction not confirmed, try again.");
 
+    await updateWalletStatus(); // Update balance
   } catch(e) {
     console.log(e);
-    alert("Transaction failed or rejected.");
+    alert("Transaction failed or rejected");
   }
 });
