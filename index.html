@@ -1,55 +1,70 @@
 <!DOCTYPE html>
 <html lang="de" class="w-full h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallet Connect Beispiel</title>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@latest/lib/index.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/lib/index.umd.min.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SP3ND-style Wallet Connect</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-react-ui@latest/dist/index.umd.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-[#011627] text-white flex flex-col min-h-screen">
+<body class="w-full h-full bg-[#011627] text-white flex flex-col min-h-screen">
 
-<header class="bg-[#011627]/90 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center">
+<header class="bg-[#011627]/90 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center fixed w-full z-50">
   <div class="font-bold text-2xl">SP3ND</div>
   <div>
-    <button id="connectWallet" class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg transition transform hover:scale-105">
+    <button id="connectWallet" class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
       Connect Wallet
     </button>
   </div>
 </header>
 
-<main class="flex-grow flex items-center justify-center">
-  <div id="walletStatus">Wallet not connected</div>
+<main class="flex-grow flex items-center justify-center pt-20">
+  <div id="walletStatus" class="text-white/70 text-center">Wallet not connected</div>
 </main>
+
+<footer class="bg-gradient-to-b from-[#011627] to-[#0a1a2e] border-t border-[#2EC4B6]/20 p-4 text-sm text-center mt-auto">
+  SP3ND - Shop Amazon with Stablecoins
+</footer>
 
 <script>
   const connectButton = document.getElementById("connectWallet");
   const walletStatus = document.getElementById("walletStatus");
 
   async function connectWallet() {
-    if (window.solana && window.solana.isPhantom) {
+    // Prüfen, ob Wallet Extensions verfügbar sind
+    if (window.solana) {
       try {
-        const resp = await window.solana.connect();
-        walletStatus.innerText = `Connected: ${resp.publicKey.toString()}`;
-        connectButton.innerText = "Wallet Connected";
-        connectButton.disabled = true;
+        // Phantom / Solflare Adapter automatisch erkennen
+        const wallet = window.solana;
+        if (!wallet.isConnected) {
+          const resp = await wallet.connect();
+          walletStatus.innerText = `Connected: ${resp.publicKey.toString()}`;
+          connectButton.innerText = "Wallet Connected";
+          connectButton.disabled = true;
+        } else {
+          walletStatus.innerText = `Already connected: ${wallet.publicKey.toString()}`;
+          connectButton.innerText = "Wallet Connected";
+          connectButton.disabled = true;
+        }
       } catch (err) {
         walletStatus.innerText = `Connection failed: ${err.message}`;
       }
     } else {
-      walletStatus.innerText = "No Phantom Wallet detected. Install it first!";
+      walletStatus.innerHTML = `No Solana wallet detected.<br/><a href="https://phantom.app/" target="_blank" class="underline text-[#2EC4B6]">Install Phantom Wallet</a>`;
     }
   }
 
   connectButton.addEventListener("click", connectWallet);
-</script>
 
-<footer class="bg-gradient-to-b from-[#011627] to-[#0a1a2e] border-t border-[#2EC4B6]/20 p-4 text-sm">
-  SP3ND - Shop Amazon with Stablecoins
-</footer>
+  // Optional: automatisch Wallet Status anzeigen, wenn bereits verbunden
+  window.addEventListener('load', () => {
+    if (window.solana?.isConnected) {
+      walletStatus.innerText = `Connected: ${window.solana.publicKey.toString()}`;
+      connectButton.innerText = "Wallet Connected";
+      connectButton.disabled = true;
+    }
+  });
+</script>
 
 </body>
 </html>
