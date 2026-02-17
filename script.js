@@ -1,58 +1,96 @@
 const payBtn = document.getElementById("payBtn");
 const amountInput = document.getElementById("amount");
 
-// 🔴 HIER DEINE ECHTE SOLANA ADRESSE
+// DEINE WALLET
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
+// Phantom Check
 function hasPhantom() {
   return window.solana && window.solana.isPhantom;
 }
 
+// PAY BUTTON
 payBtn.addEventListener("click", async () => {
   const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) return alert("Enter valid amount.");
 
-  if (!amount || amount <= 0) {
-    alert("enter a real amount.");
-    return;
-  }
+  if (!hasPhantom()) return alert("Install Phantom wallet first.");
 
-  if (!hasPhantom()) {
-    alert("install phantom wallet first.");
-    return;
-  }
+  try { await window.solana.connect({ onlyIfTrusted: false }); } 
+  catch { return alert("Wallet rejected."); }
 
-  // Wallet verbinden (wichtig!)
-  try {
-    await window.solana.connect({ onlyIfTrusted: false });
-  } catch {
-    alert("wallet connection rejected.");
-    return;
-  }
-
-  // Fake loading (aber Seite bleibt intakt)
-  const overlay = document.createElement("div");
-  overlay.style = `
-    position:fixed;
-    inset:0;
-    background:black;
-    color:#14f195;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:monospace;
-    font-size:1.5rem;
-    z-index:9999;
-  `;
-  overlay.innerText = "wasting...";
-  document.body.appendChild(overlay);
-
-  // Phantom öffnen (USER INITIIERT → Browser erlaubt)
+  // SOL Payment Link (öffnet Phantom)
   const payUrl = `solana:${WALLET_ADDRESS}?amount=${amount}`;
   window.open(payUrl, "_self");
 
-  // Weiß erst NACH Wallet-Öffnung
+  // CANVAS OVERLAY für Rakete
+  const canvas = document.createElement("canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.background = "#0f0f0f";
+  document.body.innerHTML = "";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  // Countdown 5...4...3...
+  let countdown = 5;
+  const countdownInterval = setInterval(() => {
+    ctx.fillStyle = "#0f0f0f";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = "#14f195";
+    ctx.font = "80px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(countdown > 0 ? countdown : "", canvas.width/2, canvas.height/2);
+    countdown--;
+    if(countdown < 0) clearInterval(countdownInterval);
+  }, 1000);
+
+  // kleine delay bis Rakete startet
   setTimeout(() => {
-    document.body.innerHTML = "";
-    document.body.style.background = "white";
-  }, 6000);
+    let rocketY = canvas.height - 50;
+    const rocketX = canvas.width / 2;
+
+    function drawRocket() {
+      ctx.fillStyle = "#0f0f0f";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // Rakete
+      ctx.fillStyle = "#14f195";
+      ctx.beginPath();
+      ctx.moveTo(rocketX, rocketY);
+      ctx.lineTo(rocketX-10, rocketY+30);
+      ctx.lineTo(rocketX+10, rocketY+30);
+      ctx.closePath();
+      ctx.fill();
+
+      // Flamme
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.moveTo(rocketX, rocketY+30);
+      ctx.lineTo(rocketX-5, rocketY+45);
+      ctx.lineTo(rocketX+5, rocketY+45);
+      ctx.closePath();
+      ctx.fill();
+
+      rocketY -= 5;
+
+      if(rocketY + 45 > 0) requestAnimationFrame(drawRocket);
+      else showSuccess();
+    }
+
+    drawRocket();
+  }, 6000); // countdown 5s + small delay
+
+  // Show final success
+  function showSuccess() {
+    ctx.fillStyle = "#0f0f0f";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = "#14f195";
+    ctx.font = "60px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("Solana Wasted Success 🚀", canvas.width/2, canvas.height/2);
+  }
 });
