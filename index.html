@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WasteSol Dark Layout Demo</title>
+  <title>WasteSol</title>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/dist/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/dist/index.iife.min.js"></script> 
   <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@latest/dist/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-react-ui@latest/dist/index.iife.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,33 +25,55 @@
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-grow flex flex-col items-center justify-center pt-24 bg-[#011627]">
-    <h1 class="text-3xl font-bold mb-4">Welcome to WasteSol</h1>
-    <p class="text-white/70 mb-6 text-center">Connect your wallet to start using Solana.</p>
-    <div id="walletStatus" class="text-white/60 text-center">Wallet not connected</div>
+  <!-- Hero Section -->
+  <main class="flex flex-col items-center justify-center pt-32 px-6 flex-grow text-center">
+    <h1 class="text-5xl md:text-6xl font-bold mb-4">WasteSol</h1>
+    <p class="text-white/70 mb-6 max-w-2xl">Connect your wallet and waste Solana with style.</p>
+    <button id="wasteBtn" class="bg-[#2EC4B6] hover:bg-[#26B0A6] text-black px-6 py-3 rounded-lg font-semibold transition transform hover:scale-105 mb-4">
+      Waste SOL
+    </button>
+    <div id="walletStatus" class="text-white/60 mt-4">Wallet not connected</div>
+    <div id="wasteStatus" class="text-white/60 mt-2"></div>
   </main>
 
   <!-- Footer -->
   <footer class="bg-[#011627] border-t border-[#2EC4B6]/20 p-6 text-center text-sm">
-    WasteSol - Shop Amazon with Stablecoins
+    WasteSol - Waste Solana on WasteSol.online
   </footer>
 
-  <!-- Wallet Script -->
+  <!-- Scripts -->
   <script>
     const connectBtn = document.getElementById('connectWallet');
+    const wasteBtn = document.getElementById('wasteBtn');
     const statusEl = document.getElementById('walletStatus');
+    const wasteStatusEl = document.getElementById('wasteStatus');
 
-    connectBtn.addEventListener('click', async () => {
+    let walletPublicKey = null;
+
+    async function connectWallet() {
       try {
         if (!window.solana) throw new Error('Solana wallet not found');
         const resp = await window.solana.connect();
-        statusEl.textContent = `Connected: ${resp.publicKey.toString()}`;
+        walletPublicKey = resp.publicKey.toString();
+        statusEl.textContent = `Connected: ${walletPublicKey}`;
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Connection failed';
       }
-    });
+    }
+
+    async function wasteSol() {
+      if (!walletPublicKey) {
+        wasteStatusEl.textContent = 'Connect your wallet first!';
+        return;
+      }
+      // Hier könnte ein tatsächlicher Transaction Code kommen, 
+      // aktuell nur eine Demo für die Website
+      wasteStatusEl.textContent = `You just wasted some SOL! 💸`;
+    }
+
+    connectBtn.addEventListener('click', connectWallet);
+    wasteBtn.addEventListener('click', wasteSol);
   </script>
 
 </body>
