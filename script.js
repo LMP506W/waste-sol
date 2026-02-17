@@ -1,118 +1,42 @@
-// ===============================
-// WASTE SOL – Phantom Safe Script
-// ===============================
-
-const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
-const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
 
-// DEINE WALLET ADRESSE
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
-// Solana Connection
-const connection = new solanaWeb3.Connection(
-  solanaWeb3.clusterApiUrl("mainnet-beta"),
-  "confirmed"
-);
+payBtn.disabled = false;
 
-let userPublicKey = null;
-
-// ===============================
-// Helpers
-// ===============================
-function isPhantomInstalled() {
-  return window.solana && window.solana.isPhantom;
-}
-
-function shortKey(pk) {
-  return pk.slice(0, 4) + "..." + pk.slice(-4);
-}
-
-// ===============================
-// CONNECT PHANTOM (NO OPTIONS)
-// ===============================
-connectBtn.addEventListener("click", async () => {
-  if (!isPhantomInstalled()) {
-    alert("Please open this site inside the Phantom Wallet browser.");
-    return;
-  }
-
-  try {
-    // WICHTIG: KEINE Optionen!
-    const resp = await window.solana.connect();
-    userPublicKey = resp.publicKey;
-
-    walletStatus.innerText =
-      "Connected: " + shortKey(userPublicKey.toString());
-
-    connectBtn.innerText = "Connected";
-    connectBtn.disabled = true;
-    payBtn.disabled = false;
-  } catch (err) {
-    console.error(err);
-    walletStatus.innerText = "Connection rejected";
-  }
-});
-
-// ===============================
-// WASTE SOL (TX STEP)
-// ===============================
-payBtn.addEventListener("click", async () => {
-  if (!userPublicKey) {
-    alert("Connect Phantom Wallet first.");
-    return;
-  }
-
+payBtn.addEventListener("click", () => {
   const amount = parseFloat(amountInput.value);
+
   if (!amount || amount <= 0) {
     alert("Enter a valid SOL amount.");
     return;
   }
 
-  // ⚠️ USER WARNING (EXTREM WICHTIG)
+  // ⚠️ WARNING
   const ok = confirm(
     `⚠️ WARNING ⚠️\n\n` +
     `You are about to send ${amount} SOL.\n` +
-    `This transaction is REAL and IRREVERSIBLE.\n` +
-    `The SOL will be permanently wasted.\n\n` +
+    `This transaction is REAL and IRREVERSIBLE.\n\n` +
     `Do you want to continue?`
   );
 
   if (!ok) return;
 
-  try {
-    // Create Transaction
-    const transaction = new solanaWeb3.Transaction().add(
-      solanaWeb3.SystemProgram.transfer({
-        fromPubkey: userPublicKey,
-        toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
-        lamports: Math.floor(amount * 1e9),
-      })
-    );
+  // Solana Pay Link (wallet-agnostic)
+  const label = encodeURIComponent("WASTE SOL");
+  const message = encodeURIComponent("Money goes nowhere.");
+  const url = `solana:${WALLET_ADDRESS}?amount=${amount}&label=${label}&message=${message}`;
 
-    transaction.feePayer = userPublicKey;
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
+  // Open wallet
+  window.location.href = url;
 
-    // Sign & Send
-    const signedTx = await window.solana.signTransaction(transaction);
-    const signature = await connection.sendRawTransaction(
-      signedTx.serialize()
-    );
-
-    await connection.confirmTransaction(signature, "confirmed");
-
-    // SUCCESS → ROCKET
-    launchRocket();
-  } catch (err) {
-    console.error(err);
-    alert("Transaction cancelled or failed.");
-  }
+  // Start rocket anyway (fun concept)
+  setTimeout(launchRocket, 2000);
 });
 
 // ===============================
-// ROCKET ANIMATION (AFTER TX ONLY)
+// ROCKET ANIMATION
 // ===============================
 function launchRocket() {
   const canvas = document.createElement("canvas");
@@ -164,7 +88,7 @@ function launchRocket() {
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillText(
-          "SOL WASTED SUCCESSFULLY",
+          "SOL WASTED",
           canvas.width / 2,
           canvas.height / 2
         );
