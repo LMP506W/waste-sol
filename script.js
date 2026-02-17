@@ -1,3 +1,4 @@
+// HUD
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const walletStatus = document.getElementById("walletStatus");
@@ -15,34 +16,51 @@ const connection = new solanaWeb3.Connection(
 );
 
 let userPublicKey = null;
+let selectedWallet = null;
 let playerLevel = 0;
 let totalWasted = 0;
 
-// Helpers
-function isPhantomInstalled() {
-  return window.solana && window.solana.isPhantom;
-}
+// Wallets Support
+const wallets = {
+  Phantom: () => window.solana && window.solana.isPhantom ? window.solana : null,
+  Solflare: () => window.solflare && window.solflare.isSolflare ? window.solflare : null,
+  Glow: () => window.glow && window.glow.isGlow ? window.glow : null,
+  Backpack: () => window.backpack && window.backpack.isBackpack ? window.backpack : null
+};
 
-function shortKey(pk) {
-  return pk.slice(0, 4) + "..." + pk.slice(-4);
-}
-
+// HUD Update
 function updateHUD() {
   levelCounter.innerText = `Level: ${playerLevel}`;
   totalWastedDisplay.innerText = `SOL Wasted: ${totalWasted.toFixed(3)}`;
 }
 
-// Connect Wallet
+// Short Key
+function shortKey(pk) {
+  return pk.slice(0, 4) + "..." + pk.slice(-4);
+}
+
+// Wallet Connect
 connectBtn.addEventListener("click", async () => {
-  if (!isPhantomInstalled()) {
-    alert("Please open this site inside Phantom Wallet browser.");
+  // Auswahl UI
+  const options = Object.keys(wallets);
+  let choice = prompt("Choose wallet: " + options.join(", "), "Phantom");
+  if (!options.includes(choice)) {
+    alert("Invalid wallet selected");
     return;
   }
 
+  const wallet = wallets[choice]();
+  if (!wallet) {
+    alert(`${choice} Wallet not installed or not accessible in this browser.`);
+    return;
+  }
+
+  selectedWallet = wallet;
+
   try {
-    const resp = await window.solana.connect();
+    const resp = await wallet.connect();
     userPublicKey = resp.publicKey;
-    walletStatus.innerText = "Connected: " + shortKey(userPublicKey.toString());
+    walletStatus.innerText = `${choice} Connected: ${shortKey(userPublicKey.toString())}`;
     connectBtn.innerText = "Connected";
     connectBtn.disabled = true;
     payBtn.disabled = false;
@@ -54,30 +72,24 @@ connectBtn.addEventListener("click", async () => {
 
 // Waste SOL
 payBtn.addEventListener("click", async () => {
-  if (!userPublicKey) {
-    alert("Connect Phantom first!");
-    return;
-  }
-
+  if (!userPublicKey) return alert("Connect wallet first!");
   const amount = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) {
-    alert("Enter a valid SOL amount.");
-    return;
-  }
+  if (!amount || amount <= 0) return alert("Enter a valid SOL amount");
 
   try {
-    // Prüfen, ob genug SOL vorhanden
+    // Balance Check
     const balance = await connection.getBalance(userPublicKey);
     if (balance < amount * 1e9) {
-      alert("Not enough SOL to waste!");
+      alert(`Not enough SOL. You have ${(balance/1e9).toFixed(3)} SOL`);
       return;
     }
 
+    // Prepare TX
     const tx = new solanaWeb3.Transaction().add(
       solanaWeb3.SystemProgram.transfer({
         fromPubkey: userPublicKey,
         toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
-        lamports: Math.floor(amount * 1e9),
+        lamports: Math.floor(amount * 1e9)
       })
     );
 
@@ -85,10 +97,11 @@ payBtn.addEventListener("click", async () => {
     const { blockhash } = await connection.getLatestBlockhash();
     tx.recentBlockhash = blockhash;
 
-    const signedTx = await window.solana.signTransaction(tx);
+    // Sign & Send
+    const signedTx = await selectedWallet.signTransaction(tx);
     const signature = await connection.sendRawTransaction(signedTx.serialize());
 
-    // Warten auf Bestätigung
+    // Confirm TX
     await connection.confirmTransaction(signature, "confirmed");
 
     // Update Stats
@@ -103,7 +116,14 @@ payBtn.addEventListener("click", async () => {
 
   } catch (err) {
     console.error(err);
-    alert("Transaction failed or cancelled.");
+
+    if (err.message.includes("User rejected")) {
+      alert("Transaction rejected by user.");
+    } else if (err.message.includes("0 lamports")) {
+      alert("Cannot send 0 SOL. Enter a valid amount.");
+    } else {
+      alert("Transaction failed. Try again later or switch wallet.");
+    }
   }
 });
 
@@ -113,20 +133,20 @@ function triggerBlackHole(amount) {
   if (!canvas) {
     canvas = document.createElement("canvas");
     canvas.id = "bhCanvas";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     canvas.style.position = "fixed";
     canvas.style.top = 0;
     canvas.style.left = 0;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
     canvas.style.zIndex = 999;
-    canvas.style.pointerEvents = "none"; // Buttons klickbar
+    canvas.style.pointerEvents = "none";
     document.body.appendChild(canvas);
   }
 
   const ctx = canvas.getContext("2d");
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const particleCount = 600 + playerLevel * 50;
+  const particleCount = 500 + playerLevel * 50;
   const particles = [];
 
   for (let i = 0; i < particleCount; i++) {
@@ -140,7 +160,7 @@ function triggerBlackHole(amount) {
   }
 
   function draw() {
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.beginPath();
@@ -180,11 +200,11 @@ function triggerBlackHole(amount) {
   }, 3000);
 }
 
-// Random Event Mini-Game
+// Mini-Random Event
 function triggerRandomEvent(amount) {
   const chance = Math.random();
   if (chance < 0.2) {
-    alert("🌌 Lucky Event Triggered! Cosmic Glitch!");
+    alert("🌌 Cosmic Glitch! Mini-Event triggered!");
   }
 }
 
