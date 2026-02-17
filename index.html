@@ -1,48 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Waste SOL</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-body {
-  background: #0f0f0f;
-  color: #14f195;
-  font-family: monospace;
-  text-align: center;
-  padding-top: 40px;
-}
-button {
-  padding: 1rem 2rem;
-  margin: 1rem;
-  background: #14f195;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: black;
-}
-input {
-  padding: 0.8rem;
-  margin: 0.5rem;
-  font-size: 1rem;
-  text-align: center;
-  border: 1px solid #14f195;
-  background: black;
-  color: #14f195;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>Waste SOL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #14f195;
+      font-family: monospace;
+      text-align: center;
+      padding: 40px;
+    }
+    .btn {
+      padding: 0.9rem 2rem;
+      margin: 1rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+      border-radius: 6px;
+      color: black;
+    }
+    #connectBtn { background: #14f195; }
+    #payBtn { background: #ff4d4d; }
+    #payBtn:disabled { background: #555; cursor: not-allowed; }
+    #walletStatus {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+    input {
+      padding: 0.7rem;
+      margin: 0.6rem;
+      font-size: 1rem;
+      text-align: center;
+      border: 1px solid #14f195;
+      border-radius: 4px;
+      background: #0d0d0d;
+      color: #14f195;
+      width: 80%;
+      max-width: 200px;
+    }
+  </style>
 </head>
 <body>
 
-<h1>to waste money here</h1>
+  <h1>to waste money here</h1>
 
-<button id="connectBtn">Connect Phantom</button><br>
+  <button id="connectBtn" class="btn">Connect Phantom Wallet</button>
+  <div id="walletStatus">Not connected</div>
 
-<input id="amount" type="number" placeholder="Amount in SOL" min="0.001" step="0.001" />
-<button id="payBtn">Waste SOL</button>
+  <div style="margin-top: 30px; opacity: 0.9;">
+    <input id="amount" type="number" placeholder="SOL amount" min="0.001" step="0.001" />
+    <button id="payBtn" class="btn" disabled>Waste SOL</button>
+  </div>
 
-<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-<script src="script.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
