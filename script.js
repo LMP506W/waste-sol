@@ -1,19 +1,27 @@
+// ===========================
+// Phantom Wallet + Waste SOL
+// ===========================
+
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
 
+// ✅ Deine SOL Adresse für WASTE
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
 
+// Solana Mainnet Connection
+const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
 let userPublicKey = null;
 
-// Phantom check
-function hasPhantom() { return window.solana && window.solana.isPhantom; }
+// Check Phantom Wallet
+function hasPhantom() {
+  return window.solana && window.solana.isPhantom;
+}
 
-// Update wallet status
+// Update Wallet Status (SOL Balance)
 async function updateWalletStatus() {
-  if(!userPublicKey) {
+  if (!userPublicKey) {
     walletStatus.innerText = "Not connected";
     return;
   }
@@ -22,7 +30,7 @@ async function updateWalletStatus() {
   walletStatus.innerText = `Connected: ${balanceSOL} SOL`;
 }
 
-// Sketch rocket
+// Rocket Launch Animation (Sketch)
 function launchRocket() {
   const canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -31,107 +39,111 @@ function launchRocket() {
   canvas.style.top = 0;
   canvas.style.left = 0;
   canvas.style.background = "#0f0f0f";
-  document.body.innerHTML = "";
+  document.body.innerHTML = ""; // Clear Page
   document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
+  // Countdown 5 Sekunden
   let countdown = 5;
-  const cdInterval = setInterval(() => {
+  const cd = setInterval(() => {
     ctx.fillStyle = "#0f0f0f";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#14f195";
     ctx.font = "80px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(countdown > 0 ? countdown : "", canvas.width/2, canvas.height/2);
+    ctx.fillText(countdown > 0 ? countdown : "", canvas.width / 2, canvas.height / 2);
     countdown--;
-    if(countdown < 0) clearInterval(cdInterval);
+    if (countdown < 0) clearInterval(cd);
   }, 1000);
 
+  // Rocket Animation danach
   setTimeout(() => {
     let rocketY = canvas.height - 50;
     const rocketX = canvas.width / 2;
     function drawRocket() {
       ctx.fillStyle = "#0f0f0f";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Rocket Body
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY);
-      ctx.lineTo(rocketX-10, rocketY+30);
-      ctx.lineTo(rocketX+10, rocketY+30);
+      ctx.lineTo(rocketX - 10, rocketY + 30);
+      ctx.lineTo(rocketX + 10, rocketY + 30);
       ctx.closePath();
       ctx.fill();
 
+      // Rocket Flame
       ctx.fillStyle = "#fff";
       ctx.beginPath();
-      ctx.moveTo(rocketX, rocketY+30);
-      ctx.lineTo(rocketX-5, rocketY+45);
-      ctx.lineTo(rocketX+5, rocketY+45);
+      ctx.moveTo(rocketX, rocketY + 30);
+      ctx.lineTo(rocketX - 5, rocketY + 45);
+      ctx.lineTo(rocketX + 5, rocketY + 45);
       ctx.closePath();
       ctx.fill();
 
       rocketY -= 5;
-      if(rocketY + 45 > 0) requestAnimationFrame(drawRocket);
+      if (rocketY + 45 > 0) requestAnimationFrame(drawRocket);
       else {
+        // Animation Ende: Success Message
         ctx.fillStyle = "#0f0f0f";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#14f195";
         ctx.font = "60px monospace";
         ctx.textAlign = "center";
-        ctx.fillText("Solana Wasted Success 🚀", canvas.width/2, canvas.height/2);
+        ctx.fillText("Solana Wasted Success 🚀", canvas.width / 2, canvas.height / 2);
       }
     }
     drawRocket();
   }, 6000);
 }
 
-// Connect Phantom
+// ===== Connect Phantom =====
 connectBtn.addEventListener("click", async () => {
-  if(!hasPhantom()) return alert("Install Phantom Wallet first!");
+  if (!hasPhantom()) return alert("Install Phantom Wallet first!");
   try {
-    const resp = await window.solana.connect();
+    const resp = await window.solana.connect(); // User click → Popup
     userPublicKey = resp.publicKey;
     await updateWalletStatus();
-    payBtn.disabled = false;
-  } catch(e) {
+    payBtn.disabled = false; // Waste Button aktivieren
+  } catch (e) {
     console.log(e);
     walletStatus.innerText = "Wallet connection rejected";
   }
 });
 
-// Waste SOL
+// ===== Waste SOL Button =====
 payBtn.addEventListener("click", async () => {
-  if(!userPublicKey) return alert("Connect Phantom first!");
+  if (!userPublicKey) return alert("Connect Phantom first!");
   const amount = parseFloat(amountInput.value);
-  if(!amount || amount <= 0) return alert("Enter valid SOL amount");
+  if (!amount || amount <= 0) return alert("Enter a valid SOL amount");
 
-  const transaction = new solanaWeb3.Transaction().add(
+  const tx = new solanaWeb3.Transaction().add(
     solanaWeb3.SystemProgram.transfer({
       fromPubkey: userPublicKey,
-      toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
+      toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS), // ✅ an deine Wallet
       lamports: amount * 1e9
     })
   );
 
   try {
-    const { signature } = await window.solana.signAndSendTransaction(transaction);
+    const { signature } = await window.solana.signAndSendTransaction(tx);
     console.log("TX sent:", signature);
 
-    // Wait for confirmation
-    let confirmed = false;
-    let tries = 0;
-    while(!confirmed && tries < 20) {
+    // Warten auf Bestätigung
+    let confirmed = false, tries = 0;
+    while (!confirmed && tries < 20) {
       tries++;
       const txInfo = await connection.getTransaction(signature);
-      if(txInfo && txInfo.meta && txInfo.meta.err === null) confirmed = true;
-      if(!confirmed) await new Promise(r => setTimeout(r, 3000));
+      if (txInfo && txInfo.meta && txInfo.meta.err === null) confirmed = true;
+      if (!confirmed) await new Promise(r => setTimeout(r, 3000));
     }
 
-    if(confirmed) launchRocket();
+    if (confirmed) launchRocket(); // Rocket starten
     else alert("Transaction not confirmed");
 
     await updateWalletStatus();
-  } catch(e) {
+  } catch (e) {
     console.log(e);
     alert("Transaction failed or rejected");
   }
