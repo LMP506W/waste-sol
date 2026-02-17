@@ -4,22 +4,45 @@
   <meta charset="UTF-8" />
   <title>Waste SOL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #14f195;
+      font-family: monospace;
+      text-align: center;
+      padding-top: 50px;
+    }
+    button {
+      padding: 1rem 2rem;
+      margin: 1rem;
+      background: #14f195;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: black;
+    }
+    input {
+      padding: 0.8rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      text-align: center;
+      border: 1px solid #14f195;
+      background: black;
+      color: #14f195;
+    }
+  </style>
 </head>
 <body>
 
-  <div id="app">
-    <h1>to waste money here</h1>
+  <h1>to waste money here</h1>
 
-    <div class="card">
-      <label for="amount">choose how much SOL</label>
-      <input id="amount" type="number" min="0.001" step="0.001" value="0.01" />
-      <button id="payBtn">WASTE SOL</button>
-    </div>
+  <button id="connectBtn">Connect Phantom</button><br>
 
-    <p class="hint">nothing will happen.</p>
-  </div>
+  <input id="amount" type="number" placeholder="Amount in SOL" min="0.001" step="0.001" />
+  <button id="payBtn">Waste SOL</button>
 
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
   <script src="script.js"></script>
+
 </body>
 </html>
