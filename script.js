@@ -1,11 +1,12 @@
+const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const amountInput = document.getElementById("amount");
 
-// DEINE WALLET
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com";
-
 const connection = new solanaWeb3.Connection(RPC_ENDPOINT, 'confirmed');
+
+let userPublicKey = null;
 
 // Phantom Check
 function hasPhantom() {
@@ -46,7 +47,6 @@ function launchRocket() {
       ctx.fillStyle = "#0f0f0f";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // Rakete
       ctx.fillStyle = "#14f195";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY);
@@ -55,7 +55,6 @@ function launchRocket() {
       ctx.closePath();
       ctx.fill();
 
-      // Flamme
       ctx.fillStyle = "#fff";
       ctx.beginPath();
       ctx.moveTo(rocketX, rocketY+30);
@@ -79,46 +78,49 @@ function launchRocket() {
   }, 6000);
 }
 
-// PAY BUTTON
+// ===== Connect Button =====
+connectBtn.addEventListener("click", async () => {
+  if (!hasPhantom()) return alert("Install Phantom wallet first.");
+  try {
+    const resp = await window.solana.connect();
+    userPublicKey = resp.publicKey;
+    alert("Wallet connected: " + userPublicKey.toString());
+  } catch(e) {
+    alert("Wallet connection rejected.");
+  }
+});
+
+// ===== Waste SOL Button =====
 payBtn.addEventListener("click", async () => {
+  if (!userPublicKey) return alert("Connect Phantom first!");
   const amount = parseFloat(amountInput.value);
   if (!amount || amount <= 0) return alert("Enter a valid amount.");
-  if (!hasPhantom()) return alert("Install Phantom wallet first.");
-
-  // Connect Wallet
-  try { await window.solana.connect({ onlyIfTrusted: false }); }
-  catch { return alert("Wallet rejected."); }
 
   // Create Transaction
-  const provider = window.solana;
   const transaction = new solanaWeb3.Transaction().add(
     solanaWeb3.SystemProgram.transfer({
-      fromPubkey: provider.publicKey,
+      fromPubkey: userPublicKey,
       toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
       lamports: amount * 1e9
     })
   );
 
   try {
-    // Phantom Sign + Send
-    const { signature } = await provider.signAndSendTransaction(transaction);
+    const { signature } = await window.solana.signAndSendTransaction(transaction);
     console.log("TX sent:", signature);
 
     // Polling until confirmed
     let confirmed = false;
     let tries = 0;
-    while(!confirmed && tries < 20) { // ~60s max
+    while(!confirmed && tries < 20) {
       tries++;
       const txInfo = await connection.getTransaction(signature);
       if(txInfo && txInfo.meta && txInfo.meta.err === null) confirmed = true;
       if(!confirmed) await new Promise(r => setTimeout(r, 3000));
     }
 
-    if(confirmed) {
-      launchRocket();
-    } else {
-      alert("Transaction not confirmed, try again.");
-    }
+    if(confirmed) launchRocket();
+    else alert("Transaction not confirmed, try again.");
 
   } catch(e) {
     console.log(e);
