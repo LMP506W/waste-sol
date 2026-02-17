@@ -1,119 +1,37 @@
-/* General Styles */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Courier New', monospace;
-  background-color: #0f0f0f;
-  color: #14f195;
-  overflow-x: hidden;
-}
+/* Basic Reset */
+* {margin:0; padding:0; box-sizing:border-box; font-family: 'Orbitron', monospace;}
+body {background:#0f0f0f; color:#14f195; overflow-x:hidden;}
+.container {max-width:1200px; margin:0 auto; padding:20px; text-align:center;}
 
 /* HUD */
-#hud {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  font-size: 16px;
-  color: #14f195;
-  text-shadow: 0 0 10px #14f195;
-  z-index: 1000;
-}
+#hud {position:fixed; top:10px; left:10px; z-index:999; display:flex; gap:20px; font-weight:bold; font-size:1rem; color:#0ff;}
 
-#hud span {
-  display: block;
-  margin-bottom: 5px;
-}
-
-/* Containers */
-.container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-  text-align: center;
-}
-
-/* Hero Section */
-.hero {
-  padding: 60px 20px;
-}
-
-#logo {
-  font-size: 72px;
-  font-weight: bold;
-  color: #14f195;
-  text-shadow: 0 0 20px #14f195;
-  margin-bottom: 20px;
-}
-
-/* Buttons */
-.btn {
-  padding: 15px 30px;
-  margin: 10px;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  border-radius: 10px;
-  background-color: #0f0f0f;
-  color: #14f195;
-  text-shadow: 0 0 10px #14f195;
-  transition: 0.3s all;
-}
-
-.btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px #14f195;
-}
-
-/* Input */
-input[type="number"] {
-  padding: 10px;
-  font-size: 16px;
-  width: 200px;
-  border-radius: 8px;
-  border: 2px solid #14f195;
-  background-color: #0f0f0f;
-  color: #14f195;
-  margin-bottom: 10px;
-  outline: none;
-}
+/* Hero */
+.hero {height:50vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:linear-gradient(135deg, #0f0f0f, #111111);}
+#logo {font-size:4rem; color:#0ff; letter-spacing:5px; margin-bottom:20px; text-shadow:0 0 20px #0ff;}
+.btn {padding:12px 30px; margin:10px; border:none; border-radius:10px; font-weight:bold; cursor:pointer; transition:0.3s; text-transform:uppercase;}
+.connect {background:#0ff; color:#0f0f0f;}
+.connect:hover {background:#14f195; color:#0f0f0f;}
+.pay {background:#ff0055; color:#fff;}
+.pay:hover {background:#ff66aa;}
 
 /* Waste Section */
-.waste-section h2 {
-  font-size: 36px;
-  margin-bottom: 20px;
-}
+.waste-section {padding:60px 20px; background:#111; border-top:2px solid #14f195; border-bottom:2px solid #14f195;}
+.waste-section input {padding:10px; font-size:1rem; border-radius:8px; border:none; margin-right:10px; width:120px; text-align:center;}
+.small-text {margin-top:10px; font-size:0.85rem; color:#0ff;}
 
 /* Info Section */
-.info-section {
-  padding: 60px 20px;
-}
-
-.info-container h2 {
-  font-size: 32px;
-  margin-bottom: 20px;
-}
-
-.info-container p {
-  font-size: 18px;
-  line-height: 1.5;
-}
+.info-section {padding:60px 20px; background:linear-gradient(to top, #111 0%, #0f0f0f 100%); text-align:center;}
+.info-section h2 {font-size:2.5rem; margin-bottom:20px; text-shadow:0 0 10px #14f195;}
+.info-section p {margin:15px 0; font-size:1.1rem; line-height:1.5; color:#0ff;}
 
 /* Footer */
-.footer {
-  padding: 40px 20px;
-  font-size: 16px;
-}
+.footer {padding:30px 20px; background:#0f0f0f; border-top:2px solid #14f195;}
+.footer p {font-size:1rem; color:#0ff;}
 
-/* Responsive */
-@media (max-width: 768px) {
-  #logo {
-    font-size: 48px;
-  }
-  .btn {
-    font-size: 16px;
-    padding: 12px 25px;
-  }
-  .waste-section h2 {
-    font-size: 28px;
-  }
+/* Mobile */
+@media(max-width:768px){
+  #logo {font-size:3rem;}
+  .waste-section input {width:100px;}
+  .btn {padding:10px 20px; font-size:0.9rem;}
 }
