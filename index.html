@@ -4,77 +4,134 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WasteSol</title>
+
+  <!-- Solana -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/dist/index.iife.min.js"></script> 
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@latest/dist/index.iife.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-react-ui@latest/dist/index.iife.min.js"></script>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="w-full h-full bg-[#011627] text-white flex flex-col min-h-screen">
 
-  <!-- Header -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-[#011627]/90 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <img src="/logo.svg" alt="WasteSol Logo" class="w-8 h-8">
-      <span class="font-bold text-xl">WasteSol</span>
-    </div>
-    <div>
-      <button id="connectWallet" class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105">
-        Connect Wallet
-      </button>
-    </div>
-  </header>
+<!-- HEADER -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#011627]/90 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
+  <div class="font-bold text-xl">WasteSol</div>
+  <button id="connectBtn"
+    class="bg-[#feef46] hover:bg-[#e6d73f] text-black px-4 py-2 rounded-lg font-semibold transition">
+    Connect Wallet
+  </button>
+</header>
 
-  <!-- Hero Section -->
-  <main class="flex flex-col items-center justify-center pt-32 px-6 flex-grow text-center">
-    <h1 class="text-5xl md:text-6xl font-bold mb-4">WasteSol</h1>
-    <p class="text-white/70 mb-6 max-w-2xl">Connect your wallet and waste Solana with style.</p>
-    <button id="wasteBtn" class="bg-[#2EC4B6] hover:bg-[#26B0A6] text-black px-6 py-3 rounded-lg font-semibold transition transform hover:scale-105 mb-4">
-      Waste SOL
-    </button>
-    <div id="walletStatus" class="text-white/60 mt-4">Wallet not connected</div>
-    <div id="wasteStatus" class="text-white/60 mt-2"></div>
-  </main>
+<!-- MAIN -->
+<main class="flex-grow flex flex-col items-center justify-center pt-32 px-6 text-center">
 
-  <!-- Footer -->
-  <footer class="bg-[#011627] border-t border-[#2EC4B6]/20 p-6 text-center text-sm">
-    WasteSol - Waste Solana on WasteSol.online
-  </footer>
+  <h1 class="text-5xl font-bold mb-4">Waste SOL</h1>
+  <p class="text-white/70 mb-8 max-w-xl">
+    This is not a game.  
+    Every click sends real SOL on-chain.  
+    Money goes nowhere. It is wasted.
+  </p>
 
-  <!-- Scripts -->
-  <script>
-    const connectBtn = document.getElementById('connectWallet');
-    const wasteBtn = document.getElementById('wasteBtn');
-    const statusEl = document.getElementById('walletStatus');
-    const wasteStatusEl = document.getElementById('wasteStatus');
+  <input id="amountInput"
+    type="number"
+    min="0.001"
+    step="0.001"
+    placeholder="Amount in SOL"
+    class="mb-4 px-4 py-2 rounded-lg text-black w-48 text-center" />
 
-    let walletPublicKey = null;
+  <button id="wasteBtn"
+    class="bg-[#2EC4B6] hover:bg-[#26B0A6] text-black px-6 py-3 rounded-lg font-bold transition disabled:opacity-40"
+    disabled>
+    Waste SOL
+  </button>
 
-    async function connectWallet() {
-      try {
-        if (!window.solana) throw new Error('Solana wallet not found');
-        const resp = await window.solana.connect();
-        walletPublicKey = resp.publicKey.toString();
-        statusEl.textContent = `Connected: ${walletPublicKey}`;
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'Connection failed';
-      }
+  <div id="status" class="mt-6 text-white/60">Wallet not connected</div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-[#011627] border-t border-white/10 p-4 text-center text-sm">
+  WasteSol · All transactions are real · No refunds
+</footer>
+
+<script>
+/* ================= CONFIG ================= */
+const WASTE_WALLET = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+const connection = new solanaWeb3.Connection(
+  "https://api.mainnet-beta.solana.com",
+  "confirmed"
+);
+
+/* ================= STATE ================= */
+let userPublicKey = null;
+
+/* ================= ELEMENTS ================= */
+const connectBtn = document.getElementById("connectBtn");
+const wasteBtn = document.getElementById("wasteBtn");
+const statusEl = document.getElementById("status");
+const amountInput = document.getElementById("amountInput");
+
+/* ================= CONNECT ================= */
+connectBtn.onclick = async () => {
+  try {
+    if (!window.solana) {
+      statusEl.textContent = "No Solana wallet detected";
+      return;
     }
 
-    async function wasteSol() {
-      if (!walletPublicKey) {
-        wasteStatusEl.textContent = 'Connect your wallet first!';
-        return;
-      }
-      // Hier könnte ein tatsächlicher Transaction Code kommen, 
-      // aktuell nur eine Demo für die Website
-      wasteStatusEl.textContent = `You just wasted some SOL! 💸`;
+    const resp = await window.solana.connect();
+    userPublicKey = resp.publicKey;
+
+    connectBtn.textContent = "Connected";
+    connectBtn.disabled = true;
+    wasteBtn.disabled = false;
+
+    statusEl.textContent = `Connected: ${userPublicKey.toString()}`;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Connection rejected";
+  }
+};
+
+/* ================= WASTE SOL ================= */
+wasteBtn.onclick = async () => {
+  try {
+    const amountSOL = parseFloat(amountInput.value);
+    if (!amountSOL || amountSOL <= 0) {
+      statusEl.textContent = "Enter a valid amount";
+      return;
     }
 
-    connectBtn.addEventListener('click', connectWallet);
-    wasteBtn.addEventListener('click', wasteSol);
-  </script>
+    const transaction = new solanaWeb3.Transaction().add(
+      solanaWeb3.SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: new solanaWeb3.PublicKey(WASTE_WALLET),
+        lamports: amountSOL * solanaWeb3.LAMPORTS_PER_SOL
+      })
+    );
+
+    statusEl.textContent = "Waiting for wallet approval…";
+
+    const signedTx = await window.solana.signAndSendTransaction(transaction);
+
+    statusEl.textContent = "Transaction sent. Confirming…";
+
+    await connection.confirmTransaction(signedTx.signature, "confirmed");
+
+    statusEl.innerHTML = `
+      ✅ SOL successfully wasted<br/>
+      <a href="https://solscan.io/tx/${signedTx.signature}" 
+         target="_blank" class="underline text-[#2EC4B6]">
+         View on Solscan
+      </a>
+    `;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Transaction failed or rejected";
+  }
+};
+</script>
 
 </body>
 </html>
