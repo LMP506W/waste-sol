@@ -1,128 +1,185 @@
-// HUD
+// ===============================
+// WASTE SOL – FINAL STABLE SCRIPT
+// ===============================
+
 const connectBtn = document.getElementById("connectBtn");
 const payBtn = document.getElementById("payBtn");
 const walletStatus = document.getElementById("walletStatus");
 const amountInput = document.getElementById("amount");
-const levelCounter = document.getElementById("levelCounter");
-const totalWastedDisplay = document.getElementById("totalWasted");
 
-// WALLET
+const warningBox = document.getElementById("warningBox");
+const confirmWasteBtn = document.getElementById("confirmWaste");
+const cancelWasteBtn = document.getElementById("cancelWaste");
+
 const WALLET_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 
-// Solana Connection
-const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
+const connection = new solanaWeb3.Connection(
+  solanaWeb3.clusterApiUrl("mainnet-beta"),
+  "confirmed"
+);
 
 let userPublicKey = null;
-let selectedWallet = null;
-let playerLevel = 0;
-let totalWasted = 0;
+let pendingAmount = null;
 
-// Wallet Providers
-const wallets = {
-  Phantom: () => window.solana && window.solana.isPhantom ? window.solana : null,
-  Solflare: () => window.solflare && window.solflare.isSolflare ? window.solflare : null,
-  Glow: () => window.glow && window.glow.isGlow ? window.glow : null,
-  Backpack: () => window.backpack && window.backpack.isBackpack ? window.backpack : null
-};
-
-// HUD Update
-function updateHUD() {
-  levelCounter.innerText = `Level: ${playerLevel}`;
-  totalWastedDisplay.innerText = `SOL Wasted: ${totalWasted.toFixed(3)}`;
+// -------------------------------
+// Helpers
+// -------------------------------
+function hasPhantom() {
+  return window.solana && window.solana.isPhantom;
 }
 
-// Wallet Connect
+function shortKey(pk) {
+  return pk.slice(0, 4) + "..." + pk.slice(-4);
+}
+
+async function updateWalletStatus() {
+  if (!userPublicKey) {
+    walletStatus.innerText = "Wallet not connected";
+    return;
+  }
+  const lamports = await connection.getBalance(userPublicKey);
+  const sol = (lamports / 1e9).toFixed(4);
+  walletStatus.innerText = `Connected: ${sol} SOL (${shortKey(userPublicKey.toString())})`;
+}
+
+// -------------------------------
+// Connect Phantom (SAFE)
+// -------------------------------
 connectBtn.addEventListener("click", async () => {
-  const options = Object.keys(wallets);
-  let choice = prompt("Choose wallet: " + options.join(", "), "Phantom");
-  if (!options.includes(choice)) { alert("Invalid wallet"); return; }
-  const wallet = wallets[choice]();
-  if (!wallet) { alert(`${choice} not installed.`); return; }
-  selectedWallet = wallet;
+  if (!hasPhantom()) {
+    alert("Phantom Wallet not detected.\nPlease open this site in the Phantom browser.");
+    return;
+  }
+
   try {
-    const resp = await wallet.connect();
+    const resp = await window.solana.connect({ onlyIfTrusted: false });
     userPublicKey = resp.publicKey;
-    walletStatus.innerText = `${choice} Connected`;
+    await updateWalletStatus();
+
+    connectBtn.innerText = "Wallet Connected";
     connectBtn.disabled = true;
     payBtn.disabled = false;
-  } catch (err) { console.log(err); walletStatus.innerText = "Connection rejected"; }
-});
-
-// Waste SOL
-payBtn.addEventListener("click", async () => {
-  if (!userPublicKey) return alert("Connect wallet first!");
-  const amount = parseFloat(amountInput.value);
-  if (!amount || amount<=0) return alert("Enter valid amount");
-
-  try {
-    const balance = await connection.getBalance(userPublicKey);
-    if (balance < amount*1e9) { alert(`Not enough SOL. Balance: ${(balance/1e9).toFixed(3)}`); return; }
-
-    const tx = new solanaWeb3.Transaction().add(
-      solanaWeb3.SystemProgram.transfer({
-        fromPubkey: userPublicKey,
-        toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
-        lamports: Math.floor(amount*1e9)
-      })
-    );
-    tx.feePayer = userPublicKey;
-    const { blockhash } = await connection.getLatestBlockhash();
-    tx.recentBlockhash = blockhash;
-
-    const signedTx = await selectedWallet.signTransaction(tx);
-    const signature = await connection.sendRawTransaction(signedTx.serialize());
-    await connection.confirmTransaction(signature,"confirmed");
-
-    // Update Stats
-    totalWasted += amount;
-    playerLevel = Math.floor(totalWasted);
-    updateHUD();
-
-    // Trigger Effects
-    triggerBlackHole(amount);
-    triggerRandomEvent(amount);
-    triggerAIReaction(amount);
-    generateSocialShare(amount);
-
-  } catch(err) {
-    console.log(err);
-    if(err.message.includes("User rejected")) alert("Transaction rejected");
-    else alert("Transaction failed. Try again later.");
+  } catch (err) {
+    console.error(err);
+    walletStatus.innerText = "Connection cancelled";
   }
 });
 
-// Black Hole Animation
-function triggerBlackHole(amount) {
-  let canvas = document.getElementById("bhCanvas");
-  if(!canvas) { canvas = document.createElement("canvas"); canvas.id="bhCanvas"; canvas.width=window.innerWidth; canvas.height=window.innerHeight; canvas.style.position="fixed"; canvas.style.top=0; canvas.style.left=0; canvas.style.zIndex=999; canvas.style.pointerEvents="none"; document.body.appendChild(canvas); }
+// -------------------------------
+// Waste Button → Show Warning
+// -------------------------------
+payBtn.addEventListener("click", () => {
+  const amount = parseFloat(amountInput.value);
+
+  if (!userPublicKey) {
+    alert("Connect your wallet first.");
+    return;
+  }
+
+  if (!amount || amount <= 0) {
+    alert("Enter a valid SOL amount.");
+    return;
+  }
+
+  pendingAmount = amount;
+  warningBox.classList.remove("hidden");
+});
+
+// -------------------------------
+// Cancel Warning
+// -------------------------------
+cancelWasteBtn.addEventListener("click", () => {
+  pendingAmount = null;
+  warningBox.classList.add("hidden");
+});
+
+// -------------------------------
+// Confirm & Send Transaction
+// -------------------------------
+confirmWasteBtn.addEventListener("click", async () => {
+  if (!pendingAmount || !userPublicKey) return;
+
+  warningBox.classList.add("hidden");
+
+  try {
+    const transaction = new solanaWeb3.Transaction().add(
+      solanaWeb3.SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: new solanaWeb3.PublicKey(WALLET_ADDRESS),
+        lamports: Math.floor(pendingAmount * 1e9),
+      })
+    );
+
+    transaction.feePayer = userPublicKey;
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+
+    // ✅ MOST STABLE WAY (Mobile + Desktop)
+    const { signature } = await window.solana.signAndSendTransaction(transaction);
+    await connection.confirmTransaction(signature, "confirmed");
+
+    launchRocket();
+
+    await updateWalletStatus();
+  } catch (err) {
+    console.error(err);
+    alert("Transaction cancelled or failed.");
+  } finally {
+    pendingAmount = null;
+  }
+});
+
+// -------------------------------
+// Rocket Animation (NON-BLOCKING)
+// -------------------------------
+function launchRocket() {
+  const canvas = document.createElement("canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.background = "#0b0b0b";
+  canvas.style.zIndex = "9999";
+
+  document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d");
-  const centerX=canvas.width/2, centerY=canvas.height/2;
-  const particleCount = 500 + playerLevel*50;
-  const particles = [];
-  for(let i=0;i<particleCount;i++){particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, size:Math.random()*2+1, angle:Math.random()*2*Math.PI, speed:Math.random()*4+1});}
-  function draw(){ctx.fillStyle="rgba(0,0,0,0.2)"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.beginPath(); ctx.arc(centerX,centerY,50+playerLevel*2,0,2*Math.PI); ctx.fillStyle="#0f0f0f"; ctx.fill(); ctx.strokeStyle="#14f195"; ctx.lineWidth=3; ctx.stroke(); particles.forEach(p=>{const dx=centerX-p.x; const dy=centerY-p.y; const dist=Math.sqrt(dx*dx+dy*dy); p.x+=dx*0.01+Math.cos(p.angle)*p.speed*0.05; p.y+=dy*0.01+Math.sin(p.angle)*p.speed*0.05; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,2*Math.PI); ctx.fillStyle="#14f195"; ctx.fill();}); requestAnimationFrame(draw);}
-  draw();
-  setTimeout(()=>{ctx.fillStyle="#14f195"; ctx.font="bold 60px monospace"; ctx.textAlign="center"; ctx.fillText(`${amount} SOL WASTED`,centerX,centerY); ctx.fillText(`Level ${playerLevel}`,centerX,centerY+80);},3000);
-}
 
-// Random Mini Event
-function triggerRandomEvent(amount){
-  const chance=Math.random();
-  if(chance<0.2){alert("🌌 Cosmic Glitch! Mini-Event triggered!");}
-}
+  let countdown = 5;
 
-// AI Meme Feedback
-function triggerAIReaction(amount){
-  const msgs=[
-    `You just threw ${amount} SOL into the void!`,
-    `Level ${playerLevel}: The black hole devours your coins!`,
-    `🌌 Cosmic chaos! ${amount} SOL gone forever!`,
-    `AI says: 'Wasting SOL never felt so good!'`
-  ];
-  console.log(msgs[Math.floor(Math.random()*msgs.length)]);
-}
+  const countdownInterval = setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#14f195";
+    ctx.font = "bold 64px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(countdown > 0 ? countdown : "🚀", canvas.width / 2, canvas.height / 2);
+    countdown--;
+    if (countdown < 0) clearInterval(countdownInterval);
+  }, 1000);
 
-// Social Share Placeholder
-function generateSocialShare(amount){
-  console.log(`Share this: ${amount} SOL wasted, Level ${playerLevel} 🚀`);
+  setTimeout(() => {
+    let y = canvas.height;
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#14f195";
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, y);
+      ctx.lineTo(canvas.width / 2 - 12, y + 35);
+      ctx.lineTo(canvas.width / 2 + 12, y + 35);
+      ctx.closePath();
+      ctx.fill();
+
+      y -= 7;
+
+      if (y > -60) {
+        requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillText("SOL WASTED SUCCESSFULLY", canvas.width / 2, canvas.height / 2);
+      }
+    }
+
+    animate();
+  }, 6000);
 }
