@@ -4,184 +4,49 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOTHING™</title>
+<meta name="description" content="Send SOL, ETH, or BTC and receive NOTHING™. Irreversible, no refunds, no promises.">
 
-<style>
-body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#0f0f0f;
-    color:white;
-    text-align:center;
-}
+<!-- Open Graph -->
+<meta property="og:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
+<meta property="og:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
+<meta property="og:image" content="https://solwaste.online/nothing.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://solwaste.online">
+<meta property="og:type" content="website">
 
-h1{
-    font-size:2.8rem;
-    margin-top:60px;
-}
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
+<meta name="twitter:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
+<meta name="twitter:image" content="https://solwaste.online/nothing.png">
 
-p{
-    opacity:0.8;
-}
-
-button{
-    padding:15px 30px;
-    margin:10px;
-    font-size:16px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    transition:0.2s;
-}
-
-button:hover{
-    transform:scale(1.05);
-}
-
-.pay-btn{ background:#00ff99; }
-.share-btn{ background:#1DA1F2; color:white; }
-.download-btn{ background:#ffcc00; }
-
-#counter{
-    margin-top:40px;
-    font-size:1.2rem;
-    opacity:0.7;
-}
-
-#successBox{
-    display:none;
-    margin-top:40px;
-    animation:fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn{
-    from{opacity:0;}
-    to{opacity:1;}
-}
-
-canvas{
-    margin-top:20px;
-    background:white;
-}
-</style>
+<link rel="canonical" href="https://solwaste.online/">
+<link rel="stylesheet" href="style.css">
 </head>
-    <script>
-function confirmSent(chain){
-    let amount = prompt("Enter the amount you sent:");
-    if(!amount) return;
-
-    generateReceipt(chain, amount);
-    document.getElementById("receiptSection").style.display="block";
-}
-
-function generateReceipt(chain, amount){
-    const canvas = document.getElementById("receiptCanvas");
-    const ctx = canvas.getContext("2d");
-
-    ctx.fillStyle="white";
-    ctx.fillRect(0,0,500,300);
-
-    ctx.fillStyle="black";
-    ctx.font="20px Arial";
-    ctx.fillText("Official NOTHING™ Receipt",120,40);
-
-    ctx.font="16px Arial";
-    ctx.fillText("Blockchain: "+chain,50,100);
-    ctx.fillText("Amount Sent: "+amount,50,130);
-    ctx.fillText("Received: Absolutely Nothing.",50,160);
-    ctx.fillText("Timestamp: "+new Date().toLocaleString(),50,190);
-
-    ctx.fillText("Thank you for supporting Nothing.",50,230);
-}
-
-function downloadReceipt(){
-    const canvas = document.getElementById("receiptCanvas");
-    const link = document.createElement("a");
-    link.download="nothing_receipt.png";
-    link.href=canvas.toDataURL();
-    link.click();
-}
-
-function shareX(){
-    const text="I just sent crypto into NOTHING™ and received exactly nothing. The most honest project ever built. solwaste.online";
-    const url="https://twitter.com/intent/tweet?text="+encodeURIComponent(text);
-    window.open(url,"_blank");
-}
-</script>
-
 <body>
 
-<h1>The Most Honest Crypto Project Ever Built.</h1>
-<p>Send Money. Receive Nothing.</p>
-<div id="receiptSection" style="display:none; text-align:center; margin-top:40px;">
-    <h2>Official NOTHING™ Receipt</h2>
-    <canvas id="receiptCanvas" width="500" height="300" style="background:white;"></canvas><br><br>
-    <button onclick="downloadReceipt()">Download Receipt</button>
-    <button onclick="shareX()">Share on X</button>
-</div>
-    
-<button class="pay-btn" onclick="simulatePayment()">Send Nothing</button>
+<div class="container">
+<h1>NOTHING™</h1>
+<p class="tagline">Send crypto. Receive nothing.</p>
 
-<div id="counter">
-    Total Nothing Sent: <span id="nothingAmount">0</span>
+<div class="buttons">
+<button onclick="openSolana()" aria-label="Send SOL cryptocurrency">Send SOL</button>
+<button onclick="openEthereum()" aria-label="Send ETH cryptocurrency">Send ETH</button>
+<button onclick="openBitcoin()" aria-label="Send BTC cryptocurrency">Send BTC</button>
 </div>
 
-<div id="successBox">
-    <h2>You are now an Official NOTHING™ Holder</h2>
-    <canvas id="receiptCanvas" width="500" height="300"></canvas><br>
-    <button class="download-btn" onclick="downloadReceipt()">Download Receipt</button>
-    <button class="share-btn" onclick="shareX()">Share on X</button>
+<div id="panel"></div>
+
+<p class="footer">
+All transactions are irreversible.<br>
+No refunds. No utility. No promises.<br>
+<a href="privacy.html">Privacy Policy</a>
+</p>
 </div>
 
-<script>
-let totalNothing = localStorage.getItem("nothingTotal") || 0;
-document.getElementById("nothingAmount").innerText = totalNothing;
-
-function simulatePayment(){
-    let amount = (Math.random() * 0.5).toFixed(3);
-    totalNothing = (parseFloat(totalNothing) + parseFloat(amount)).toFixed(3);
-    localStorage.setItem("nothingTotal", totalNothing);
-    document.getElementById("nothingAmount").innerText = totalNothing;
-
-    generateReceipt(amount);
-    document.getElementById("successBox").style.display="block";
-}
-
-function generateReceipt(amount){
-    const canvas = document.getElementById("receiptCanvas");
-    const ctx = canvas.getContext("2d");
-
-    ctx.fillStyle="white";
-    ctx.fillRect(0,0,500,300);
-
-    ctx.fillStyle="black";
-    ctx.font="20px Arial";
-    ctx.fillText("Official NOTHING™ Receipt",120,40);
-
-    ctx.font="16px Arial";
-    ctx.fillText("Amount Sent: "+amount+" ETH",50,100);
-    ctx.fillText("Received: Absolutely Nothing.",50,130);
-    ctx.fillText("Timestamp: "+new Date().toLocaleString(),50,160);
-
-    let wallet="0x"+Math.random().toString(16).substring(2,10)+"...";
-    ctx.fillText("Wallet: "+wallet,50,190);
-
-    ctx.fillText("Congratulations.",50,230);
-}
-
-function downloadReceipt(){
-    const canvas = document.getElementById("receiptCanvas");
-    const link = document.createElement("a");
-    link.download="nothing_receipt.png";
-    link.href=canvas.toDataURL();
-    link.click();
-}
-
-function shareX(){
-    const text="I just sent crypto and received NOTHING™. The most honest project ever built. solwaste.online";
-    const url="https://twitter.com/intent/tweet?text="+encodeURIComponent(text);
-    window.open(url,"_blank");
-}
-</script>
-
+<script src="solana.min.js" defer></script>
+<script src="ethereum.min.js" defer></script>
+<script src="bitcoin.min.js" defer></script>
 </body>
 </html>
