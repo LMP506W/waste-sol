@@ -23,54 +23,19 @@
 
 <link rel="canonical" href="https://solwaste.online/">
 <style>
-body {
-    font-family: sans-serif;
-    background: #111;
-    color: #eee;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-}
-.container {
-    max-width: 600px;
-    margin: 50px auto;
-}
-h1 {
-    font-size: 3em;
-    margin-bottom: 0.2em;
-}
-p.tagline {
-    font-size: 1.2em;
-    margin-bottom: 2em;
-}
-.buttons button {
-    margin: 0.5em;
-    padding: 1em 2em;
-    font-size: 1em;
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    background: #ff4500;
-    color: white;
-}
-.buttons button:hover {
-    background: #ff6347;
-}
-#panel {
-    margin-top: 2em;
-    font-size: 1.1em;
-}
-#qrcode {
-    margin: 1em auto;
-}
-canvas {
-    border: 2px solid #eee;
-    border-radius: 12px;
-}
-.footer {
-    margin-top: 3em;
-    font-size: 0.9em;
-}
+body { font-family:sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:0; }
+.container { max-width:600px; margin:50px auto; }
+h1 { font-size:3em; margin-bottom:0.2em; }
+p.tagline { font-size:1.2em; margin-bottom:2em; }
+.buttons button { margin:0.5em; padding:1em 2em; font-size:1em; cursor:pointer; border:none; border-radius:8px; background:#ff4500; color:white; }
+.buttons button:hover { background:#ff6347; }
+#panel { margin-top:2em; font-size:1.1em; }
+#qrcode { margin:1em auto; }
+canvas { border:2px solid #eee; border-radius:12px; }
+.footer { margin-top:3em; font-size:0.9em; }
+.copy-button { margin-left:0.5em; padding:0.2em 0.5em; font-size:0.8em; border-radius:5px; }
+.address-code { background:#222; padding:0.2em 0.4em; border-radius:4px; }
+.amount-input { width:50px; margin-left:0.5em; text-align:center; }
 </style>
 </head>
 <body>
@@ -80,124 +45,73 @@ canvas {
     <p class="tagline">Send crypto. Receive nothing.</p>
 
     <div class="buttons">
-        <button onclick="openSolana()" aria-label="Send SOL cryptocurrency">Send SOL</button>
-        <button onclick="openEthereum()" aria-label="Send ETH cryptocurrency">Send ETH</button>
-        <button onclick="openBitcoin()" aria-label="Send BTC cryptocurrency">Send BTC</button>
+        <button onclick="openSolana()">Send SOL</button>
+        <button onclick="openEthereum()">Send ETH</button>
+        <button onclick="openBitcoin()">Send BTC</button>
     </div>
 
     <div id="panel"></div>
     <div id="qrcode"></div>
 
+    <div id="wallet-links"></div>
+
     <p class="footer">
         All transactions are irreversible.<br>
         No refunds. No utility. No promises.<br>
-        <a href="privacy.html" style="color:#ff4500">Privacy Policy</a>
+        <a href="privacy.html">Privacy Policy</a>
     </p>
 </div>
 
 <script>
-// Your crypto addresses
+// Addresses
 const SOL_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
 const BTC_ADDRESS = "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k";
 
-// === QR Code generator (pure JS) ===
-// Minimal implementation using QRious (inline, ~2kb)
-class QRious {
-    constructor({element, value, size}) {
-        if (!element) throw new Error("Element required");
-        const canvas = element;
-        const qr = new window.QRCodeGenerator(value);
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        const cell = size / qr.size;
-        for (let r = 0; r < qr.size; r++) {
-            for (let c = 0; c < qr.size; c++) {
-                ctx.fillStyle = qr.modules[r][c] ? "#000" : "#fff";
-                ctx.fillRect(c*cell, r*cell, cell, cell);
-            }
-        }
-    }
-}
-
-// Minimal QR code generator (from https://github.com/davidshimjs/qrcodejs)
-window.QRCodeGenerator = function(data) {
-    // Very minimal, just enough for small QR
-    const qr = new QRCodeModel(0, 'L'); // version 1, error correction L
-    qr.addData(data);
-    qr.make();
-    this.size = qr.getModuleCount();
-    this.modules = [];
-    for (let r = 0; r < this.size; r++) {
-        this.modules[r] = [];
-        for (let c = 0; c < this.size; c++) {
-            this.modules[r][c] = qr.isDark(r, c);
-        }
-    }
-};
-
-// --- Create canvas QR ---
+// QR generator using Google Chart API
 function generateQRCode(text) {
     const qrcodeDiv = document.getElementById("qrcode");
     qrcodeDiv.innerHTML = "";
-    const canvas = document.createElement("canvas");
-    qrcodeDiv.appendChild(canvas);
-    new QRious({element: canvas, value: text, size: 200});
+    const size = 200;
+    const img = document.createElement("img");
+    img.src = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`;
+    img.alt = "QR Code";
+    qrcodeDiv.appendChild(img);
 }
 
-// === Crypto button functions ===
-function openSolana() {
-    document.getElementById("panel").innerHTML = "<p>Scan to send SOL:</p>";
-    generateQRCode(SOL_ADDRESS);
+// Copy to clipboard
+function copyAddress(addr) {
+    navigator.clipboard.writeText(addr).then(()=>{ alert("Copied: "+addr); });
 }
 
-function openEthereum() {
+// --- Payment functions ---
+function openSolana() { showPaymentPanel("SOL", SOL_ADDRESS); }
+function openEthereum() { showPaymentPanel("ETH", ETH_ADDRESS); }
+function openBitcoin() { showPaymentPanel("BTC", BTC_ADDRESS); }
+
+function showPaymentPanel(type, addr){
     const panel = document.getElementById("panel");
-    panel.innerHTML = "<p>Connect wallet or scan QR to send ETH:</p>";
-    if (window.ethereum) {
-        window.ethereum.request({ method: 'eth_requestAccounts' })
-        .then(accounts => {
-            panel.innerHTML += `<p>Connected: ${accounts[0]}</p>`;
-        })
-        .catch(err => {
-            panel.innerHTML += `<p>Wallet connection failed. Scan QR:</p>`;
-            generateQRCode(ETH_ADDRESS);
-        });
-    } else {
-        generateQRCode(ETH_ADDRESS);
-    }
+    panel.innerHTML = `<p>Scan QR or click button to send <b>1 ${type}</b> (optional custom amount below)</p>`;
+    generateQRCode(addr);
+
+    // Wallet links + copy + pay buttons
+    const linksDiv = document.getElementById("wallet-links");
+    linksDiv.innerHTML = `
+        <p>${type} Address: <span class="address-code">${addr}</span>
+        <button class="copy-button" onclick="copyAddress('${addr}')">Copy</button></p>
+        <p>Send 1 ${type}: <button onclick="payExact('${type}', '${addr}', 1)">Send 1</button></p>
+        <p>Or custom amount: <input type="number" id="custom-amount" class="amount-input" min="0.0001" step="0.0001" value="1">
+        <button onclick="payCustom('${type}', '${addr}')">Send</button></p>
+    `;
 }
 
-function openBitcoin() {
-    document.getElementById("panel").innerHTML = "<p>Scan to send BTC:</p>";
-    generateQRCode(BTC_ADDRESS);
+// Dummy functions for send buttons
+function payExact(type, addr, amount){
+    alert(`Pretending to send ${amount} ${type} to ${addr}. Implement real payment logic here.`);
 }
-</script>
-
-<!-- QRCodeModel class (minimal) -->
-<script>
-// Minimal QR code model from qrcodejs (version 1)
-class QRCodeModel {
-    constructor(typeNumber, errorCorrectLevel) {
-        this.typeNumber = typeNumber;
-        this.errorCorrectLevel = errorCorrectLevel;
-        this.modules = null;
-        this.moduleCount = 21; // version 1
-        this.dataCache = [];
-    }
-    addData(data) { this.dataCache.push(data); }
-    make() { 
-        this.modules = Array(this.moduleCount).fill(0).map(()=>Array(this.moduleCount).fill(false));
-        // simple dummy pattern to make QR visible
-        for (let r=0; r<this.moduleCount; r++){
-            for(let c=0;c<this.moduleCount;c++){
-                this.modules[r][c] = (r+c)%2===0;
-            }
-        }
-    }
-    getModuleCount() { return this.moduleCount; }
-    isDark(row, col) { return this.modules[row][col]; }
+function payCustom(type, addr){
+    const val = document.getElementById("custom-amount").value;
+    alert(`Pretending to send ${val} ${type} to ${addr}. Implement real payment logic here.`);
 }
 </script>
 
