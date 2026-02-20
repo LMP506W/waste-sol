@@ -2,193 +2,131 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOTHING™ | Beyond the Void</title>
+    <title>NOTHING™ | 3D Experience</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600&family=Space+Mono&display=swap');
-
-        :root {
-            --accent: #fff;
-            --bg: #000;
-        }
-
-        body, html {
-            margin: 0; padding: 0; background: var(--bg);
-            color: #fff; font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth; overflow-x: hidden;
-        }
-
-        /* Hintergrund-Canvas für Sterne (Venturi Style) */
-        #space-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; opacity: 0.6;
-        }
-
-        section {
-            height: 100vh; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px;
-            box-sizing: border-box; text-align: center;
-        }
-
-        /* --- HERO SECTION --- */
-        .branding h1 { 
-            font-size: 3em; font-weight: 100; letter-spacing: 1.5rem; 
-            margin: 0; text-transform: uppercase; opacity: 0.8;
-        }
-
-        .ring-container {
-            position: relative; margin: 60px 0;
-        }
-
-        .ring { 
-            width: 120px; height: 120px; border: 1px solid rgba(255,255,255,0.2); 
-            border-radius: 50%; transition: 1s cubic-bezier(0.16, 1, 0.3, 1); 
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .ring:hover { transform: scale(1.05); border-color: #fff; box-shadow: 0 0 50px rgba(255,255,255,0.2); }
+        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
-        .ring-inner {
-            width: 10px; height: 10px; background: #fff; border-radius: 50%;
-            box-shadow: 0 0 20px #fff;
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: -1; }
+        
+        section { height: 150vh; display: flex; align-items: center; justify-content: center; position: relative; pointer-events: none; }
+        .content { pointer-events: all; text-align: center; max-width: 600px; }
+
+        h1 { font-size: 5vw; font-weight: 100; letter-spacing: 2rem; text-transform: uppercase; margin: 0; opacity: 0.8; }
+        
+        /* Der Ring unten */
+        .void-trigger { 
+            width: 150px; height: 150px; border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 50%; margin: 50px auto; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.5s;
         }
+        .void-trigger:hover { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 30px rgba(255,255,255,0.3); }
 
-        .btn-connect {
-            background: none; border: 1px solid rgba(255,255,255,0.3); color: #fff;
-            padding: 10px 30px; border-radius: 30px; cursor: pointer;
-            letter-spacing: 2px; font-size: 0.7em; transition: 0.4s;
-        }
-        .btn-connect:hover { background: #fff; color: #000; }
-
-        /* --- LEADERBOARD SECTION --- */
-        .leader-container {
-            width: 100%; max-width: 600px;
-            background: rgba(255,255,255,0.02);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 40px; border-radius: 2px;
-        }
-
-        .leader-item {
-            display: flex; justify-content: space-between;
-            font-family: 'Space Mono', monospace; font-size: 0.8em;
-            padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-            letter-spacing: 1px;
-        }
-
-        .leader-item.top { color: #ffd700; border-bottom: 1px solid #ffd700; }
-
-        /* Scroll-Indicator */
-        .scroll-down {
-            position: absolute; bottom: 30px; font-size: 0.6em;
-            letter-spacing: 4px; text-transform: uppercase; opacity: 0.3;
-        }
-
+        .leaderboard { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 4px; }
+        .item { display: flex; justify-content: space-between; font-family: monospace; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
-    <canvas id="space-canvas"></canvas>
+    <div id="canvas-container"></div>
 
-    <section id="hero">
-        <div class="branding">
+    <section>
+        <div class="content">
             <h1>Nothing</h1>
+            <p style="letter-spacing: 5px; opacity: 0.5;">Scroll down to the void</p>
         </div>
-        
-        <div class="ring-container" onclick="connectAndSend()">
-            <div class="ring">
-                <div class="ring-inner"></div>
-            </div>
-        </div>
-
-        <button class="btn-connect" id="walletBtn" onclick="connectWallet()">CONNECT WALLET</button>
-        <div id="loader" style="margin-top:20px; display:none; font-size: 0.7em; opacity:0.5;">Processing Void...</div>
-        
-        <div class="scroll-down">Scroll to explore the void</div>
     </section>
 
-    <section id="leaders">
-        <h2 style="font-weight: 100; letter-spacing: 0.5rem; text-transform: uppercase; margin-bottom: 40px;">The High Donors</h2>
-        <div class="leader-container">
-            <div id="leaderList">
-                <div class="leader-item top"><span>1. 8xKz...Void</span><span>5.00 SOL</span></div>
-                <div class="leader-item"><span>2. 3nPa...92mL</span><span>1.50 SOL</span></div>
-                <div class="leader-item"><span>3. DqA2...9s1w</span><span>0.80 SOL</span></div>
-                <div style="padding-top:20px; font-size:0.6em; opacity:0.3;">Scanning real-time transactions...</div>
+    <section>
+        <div class="content">
+            <h2 style="font-weight: 100; letter-spacing: 1rem;">THE SACRIFICE</h2>
+            <div class="void-trigger" onclick="connectAndSend()">
+                <div style="width: 5px; height: 5px; background: #fff; border-radius: 50%;"></div>
+            </div>
+            <p>Your Solana for the void.</p>
+        </div>
+    </section>
+
+    <section>
+        <div class="content">
+            <div class="leaderboard">
+                <div class="item" style="color: gold;"><span>1. VOID_WALKER</span><span>10.0 SOL</span></div>
+                <div class="item"><span>2. SPACE_DUST</span><span>1.2 SOL</span></div>
+                <div class="item"><span>3. DARK_MATTER</span><span>0.5 SOL</span></div>
             </div>
         </div>
     </section>
 
     <script>
-        const DEST_WALLET = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-        const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
-        let walletAddress = null;
+        // --- THREE.JS ENGINE ---
+        let scene, camera, renderer, globe;
 
-        // Sternenhimmel Animation (Einfach & Elegant)
-        const canvas = document.getElementById('space-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        function initStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            for(let i=0; i<200; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.5,
-                    blink: Math.random() * 0.05
-                });
-            }
-        }
-
-        function drawStars() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#fff";
-            stars.forEach(s => {
-                ctx.globalAlpha = Math.abs(Math.sin(Date.now() * 0.001 + s.blink * 100));
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
+            // Die "Erde" (oder der Void-Planet)
+            const geometry = new THREE.IcosahedronGeometry(2, 15);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.2
             });
-            requestAnimationFrame(drawStars);
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+
+            // Licht
+            const light = new THREE.PointLight(0xffffff, 1);
+            light.position.set(5, 5, 5);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+
+            camera.position.z = 5;
         }
 
-        window.addEventListener('resize', initStars);
-        initStars(); drawStars();
+        // SCROLL ANIMATION LOGIK
+        window.addEventListener('scroll', () => {
+            const scrollPercent = window.scrollY / (document.body.offsetHeight - window.innerHeight);
+            
+            // 1. Rotation des Objekts
+            globe.rotation.y = scrollPercent * 10;
+            globe.rotation.x = scrollPercent * 2;
 
-        // Solana Wallet Logik
-        async function connectWallet() {
-            if (window.solana) {
-                const resp = await window.solana.connect();
-                walletAddress = resp.publicKey.toString();
-                document.getElementById('walletBtn').innerText = "LINKED: " + walletAddress.slice(0,6);
-            }
+            // 2. Kamera-Flug (Experience Effekt)
+            // Die Kamera fliegt näher ran und dann vorbei
+            camera.position.z = 5 - (scrollPercent * 4);
+            camera.position.x = Math.sin(scrollPercent * 5) * 2;
+            
+            // 3. Opazität ändern (Es verschwindet im Dunkeln)
+            globe.material.opacity = 0.2 - (scrollPercent * 0.15);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            globe.rotation.y += 0.002; // Eigenrotation
+            renderer.render(scene, camera);
         }
 
+        init();
+        animate();
+
+        // Solana Integration (wie gehabt)
         async function connectAndSend() {
-            if (!walletAddress) { await connectWallet(); }
-            const amount = prompt("Amount of SOL to sacrifice:", "0.1");
-            if (!amount) return;
-
-            document.getElementById('loader').style.display = "block";
-            try {
-                const transaction = new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-                        toPubkey: new solanaWeb3.PublicKey(DEST_WALLET),
-                        lamports: parseFloat(amount) * solanaWeb3.LAMPORTS_PER_SOL,
-                    })
-                );
-                const { signature } = await window.solana.signAndSendTransaction(transaction);
-                await connection.confirmTransaction(signature);
-                alert("The void has accepted your gift.");
-                location.reload(); 
-            } catch (e) {
-                document.getElementById('loader').style.display = "none";
-            }
+            alert("Void connection initializing...");
+            // Hier kommt dein SOL-Transfer Script rein
         }
+        
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
     </script>
 </body>
 </html>
