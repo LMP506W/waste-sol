@@ -1,3 +1,18 @@
-const ETH_ADDRESS="0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
-function openEthereum(){document.getElementById("panel").innerHTML=`<p>Amount in ETH</p><input type="number" id="ethAmount" step="0.001" placeholder="0.001"><br><button onclick="sendEth()">Connect & Send</button>`;}
-async function sendEth(){if(!window.ethereum){alert("Install MetaMask.");return}const amount=document.getElementById("ethAmount").value;if(!amount||amount<=0){alert("Enter valid amount.");return}await window.ethereum.request({method:"eth_requestAccounts"});const provider=new ethers.BrowserProvider(window.ethereum),signer=await provider.getSigner(),tx=await signer.sendTransaction({to:ETH_ADDRESS,value:ethers.parseEther(amount)});await tx.wait();document.getElementById("panel").innerHTML=`<p>Transaction confirmed.</p><p><a href="https://etherscan.io/tx/${tx.hash}" target="_blank">View on Etherscan</a></p><p>You received nothing.</p>`;}
+const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
+
+function openEthereum() {
+    const amount = prompt("Enter amount in ETH (optional for QR):", "0.001");
+    const url = `ethereum:${ETH_ADDRESS}?value=${ethers.parseEther(amount || "0.001")}`;
+
+    document.getElementById("panel").innerHTML = `
+        <p>Scan to send ETH</p>
+        <div id="qr"></div>
+        <p>Estimated fee: ~0.002 ETH</p>
+    `;
+
+    new QRCode(document.getElementById("qr"), {
+        text: url,
+        width: 200,
+        height: 200
+    });
+}
