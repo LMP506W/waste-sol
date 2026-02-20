@@ -1,132 +1,164 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NOTHING™ | 3D Experience</title>
+    <title>NOTHING™ | THE SINGULARITY</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { margin: 0; background: #000; color: #fff; font-family: 'Space Mono', monospace; overflow-x: hidden; }
+        #webgl-bg { position: fixed; top: 0; left: 0; outline: none; z-index: -1; }
         
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: -1; }
+        section { height: 200vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        section { height: 150vh; display: flex; align-items: center; justify-content: center; position: relative; pointer-events: none; }
-        .content { pointer-events: all; text-align: center; max-width: 600px; }
+        .ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .interactive { pointer-events: all; }
 
-        h1 { font-size: 5vw; font-weight: 100; letter-spacing: 2rem; text-transform: uppercase; margin: 0; opacity: 0.8; }
-        
-        /* Der Ring unten */
-        .void-trigger { 
-            width: 150px; height: 150px; border: 1px solid rgba(255,255,255,0.2); 
-            border-radius: 50%; margin: 50px auto; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.5s;
+        .header-box { position: absolute; top: 50px; left: 50px; border-left: 1px solid #fff; padding-left: 20px; }
+        .header-box h1 { font-weight: 100; letter-spacing: 15px; margin: 0; font-size: 1.2rem; }
+
+        .sacrifice-zone { 
+            text-align: center; 
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(20px);
+            padding: 60px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 2px;
         }
-        .void-trigger:hover { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 30px rgba(255,255,255,0.3); }
 
-        .leaderboard { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 4px; }
-        .item { display: flex; justify-content: space-between; font-family: monospace; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .void-btn {
+            background: none; border: 1px solid #fff; color: #fff;
+            padding: 20px 50px; cursor: pointer; font-size: 0.8rem;
+            letter-spacing: 5px; transition: all 0.5s;
+        }
+        .void-btn:hover { background: #fff; color: #000; box-shadow: 0 0 50px #fff; }
+
+        .leaderboard-fixed {
+            position: absolute; bottom: 50px; right: 50px; width: 300px;
+            font-size: 0.6rem; opacity: 0.4; text-align: right;
+        }
     </style>
 </head>
 <body>
 
-    <div id="canvas-container"></div>
+    <canvas id="webgl-bg"></canvas>
 
-    <section>
-        <div class="content">
-            <h1>Nothing</h1>
-            <p style="letter-spacing: 5px; opacity: 0.5;">Scroll down to the void</p>
+    <div class="ui-layer">
+        <div class="header-box">
+            <h1>NOTHING</h1>
+            <div style="font-size: 0.5rem; opacity: 0.5; margin-top: 5px;">V30 INTERFACE // SOLANA MAINNET</div>
         </div>
-    </section>
 
-    <section>
-        <div class="content">
-            <h2 style="font-weight: 100; letter-spacing: 1rem;">THE SACRIFICE</h2>
-            <div class="void-trigger" onclick="connectAndSend()">
-                <div style="width: 5px; height: 5px; background: #fff; border-radius: 50%;"></div>
+        <div class="leaderboard-fixed">
+            <div style="margin-bottom: 10px; letter-spacing: 2px;">TOP SACRIFICES</div>
+            <div id="leader-items">
+                <div>8xKz...Void : 12.50 SOL</div>
+                <div>Whale...72m : 5.00 SOL</div>
+                <div>Fake...User : 1.20 SOL</div>
             </div>
-            <p>Your Solana for the void.</p>
         </div>
-    </section>
+    </div>
 
     <section>
-        <div class="content">
-            <div class="leaderboard">
-                <div class="item" style="color: gold;"><span>1. VOID_WALKER</span><span>10.0 SOL</span></div>
-                <div class="item"><span>2. SPACE_DUST</span><span>1.2 SOL</span></div>
-                <div class="item"><span>3. DARK_MATTER</span><span>0.5 SOL</span></div>
-            </div>
+        </section>
+
+    <section>
+        <div class="sacrifice-zone interactive">
+            <h2 style="font-weight: 100; letter-spacing: 10px; margin-bottom: 40px;">FEED THE SINGULARITY</h2>
+            <button class="void-btn" onclick="triggerSacrifice()">INITIATE TRANSFER</button>
+            <div id="status" style="margin-top: 20px; font-size: 0.6rem; opacity: 0.5;">AWAITING SELECTION...</div>
         </div>
     </section>
 
     <script>
-        // --- THREE.JS ENGINE ---
-        let scene, camera, renderer, globe;
+        // --- THE SINGULARITY ENGINE (Three.js) ---
+        let scene, camera, renderer, particles, particleSystem;
+        const particleCount = 15000;
 
-        function init() {
+        function init3D() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-bg'), antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Die "Erde" (oder der Void-Planet)
-            const geometry = new THREE.IcosahedronGeometry(2, 15);
-            const material = new THREE.MeshStandardMaterial({ 
-                color: 0xffffff, 
-                wireframe: true,
-                transparent: true,
-                opacity: 0.2
-            });
-            globe = new THREE.Mesh(geometry, material);
-            scene.add(globe);
+            particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            // Partikel in einer galaktischen Spirale anordnen
+            for (let i = 0; i < particleCount; i++) {
+                const r = Math.random() * 5 + 2;
+                const theta = Math.random() * Math.PI * 2;
+                positions[i*3] = Math.cos(theta) * r;
+                positions[i*3+1] = (Math.random() - 0.5) * 2;
+                positions[i*3+2] = Math.sin(theta) * r;
+            }
 
-            // Licht
-            const light = new THREE.PointLight(0xffffff, 1);
-            light.position.set(5, 5, 5);
-            scene.add(light);
-            scene.add(new THREE.AmbientLight(0x404040));
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.015, transparent: true, opacity: 0.6 });
+            particleSystem = new THREE.Points(particles, material);
+            scene.add(particleSystem);
 
-            camera.position.z = 5;
+            camera.position.z = 10;
         }
-
-        // SCROLL ANIMATION LOGIK
-        window.addEventListener('scroll', () => {
-            const scrollPercent = window.scrollY / (document.body.offsetHeight - window.innerHeight);
-            
-            // 1. Rotation des Objekts
-            globe.rotation.y = scrollPercent * 10;
-            globe.rotation.x = scrollPercent * 2;
-
-            // 2. Kamera-Flug (Experience Effekt)
-            // Die Kamera fliegt näher ran und dann vorbei
-            camera.position.z = 5 - (scrollPercent * 4);
-            camera.position.x = Math.sin(scrollPercent * 5) * 2;
-            
-            // 3. Opazität ändern (Es verschwindet im Dunkeln)
-            globe.material.opacity = 0.2 - (scrollPercent * 0.15);
-        });
 
         function animate() {
             requestAnimationFrame(animate);
-            globe.rotation.y += 0.002; // Eigenrotation
+            
+            const scrollPercent = window.scrollY / document.body.scrollHeight;
+            
+            // Die Galaxie dreht sich schneller beim Scrollen
+            particleSystem.rotation.y += 0.001 + (scrollPercent * 0.05);
+            particleSystem.rotation.z += 0.0005;
+
+            // Kamera Zoom-Effekt
+            camera.position.z = 10 - (scrollPercent * 8);
+            camera.lookAt(scene.position);
+
             renderer.render(scene, camera);
         }
 
-        init();
+        // --- SOLANA LOGIC (V30 Optimized) ---
+        const DEST_WALLET = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+
+        async function triggerSacrifice() {
+            const status = document.getElementById('status');
+            if (!window.solana) { alert("Phantom not found"); return; }
+
+            try {
+                const resp = await window.solana.connect();
+                status.innerText = "CONNECTED: " + resp.publicKey.toString().slice(0,8);
+                
+                const amount = prompt("Amount of SOL to delete from existence:", "0.5");
+                if(!amount) return;
+
+                // Animation: Singularität zieht sich zusammen
+                const tl = setInterval(() => {
+                    particleSystem.scale.x *= 0.98;
+                    particleSystem.scale.y *= 0.98;
+                    particleSystem.scale.z *= 0.98;
+                }, 50);
+
+                // Hier Transaktions-Logik einbauen...
+                // Nach Erfolg: Reset oder Zerstörungs-Effekt
+                setTimeout(() => {
+                    clearInterval(tl);
+                    particleSystem.scale.set(1,1,1);
+                    status.innerText = "TRANSACTION SUCCESSFUL. NOTHING RECEIVED.";
+                }, 3000);
+
+            } catch (err) {
+                status.innerText = "VOID REJECTED CONNECTION.";
+            }
+        }
+
+        init3D();
         animate();
 
-        // Solana Integration (wie gehabt)
-        async function connectAndSend() {
-            alert("Void connection initializing...");
-            // Hier kommt dein SOL-Transfer Script rein
-        }
-        
-        window.onresize = () => {
+        window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        };
+        });
     </script>
 </body>
 </html>
