@@ -1,9 +1,10 @@
-const ETH_ADDRESS = "DEINE_ETH_ADRESSE_HIER";
+const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
 
-async function openEthereum() {
-    const panel = document.getElementById("panel");
-    panel.innerHTML = `
-        <p>Connect MetaMask to send ETH.</p>
+function openEthereum() {
+    document.getElementById("panel").innerHTML = `
+        <p>Amount in ETH</p>
+        <input type="number" id="ethAmount" step="0.001" placeholder="0.001">
+        <br>
         <button onclick="sendEth()">Connect & Send</button>
     `;
 }
@@ -14,6 +15,12 @@ async function sendEth() {
         return;
     }
 
+    const amount = document.getElementById("ethAmount").value;
+    if (!amount || amount <= 0) {
+        alert("Enter valid amount.");
+        return;
+    }
+
     await window.ethereum.request({ method: "eth_requestAccounts" });
 
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -21,13 +28,14 @@ async function sendEth() {
 
     const tx = await signer.sendTransaction({
         to: ETH_ADDRESS,
-        value: ethers.parseEther("0.001")
+        value: ethers.parseEther(amount)
     });
 
     await tx.wait();
 
     document.getElementById("panel").innerHTML = `
         <p>Transaction confirmed.</p>
+        <p><a href="https://etherscan.io/tx/${tx.hash}" target="_blank">View on Etherscan</a></p>
         <p>You received nothing.</p>
     `;
 }
