@@ -4,92 +4,241 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOTHING™</title>
-<link rel="stylesheet" href="style.css">
+<style>
+/* --- Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@300&display=swap');
+
+/* --- Body & Background --- */
+body, html {
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    font-family:'Space Mono', monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(-45deg, #000080, #000040, #4682B4, #000080);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
+    color:#fff;
+}
+
+@keyframes gradientBG {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+/* --- Centered Panel --- */
+.panel {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-radius:16px;
+    padding:40px;
+    box-shadow:0 0 50px rgba(0,0,0,0.5);
+    max-width:400px;
+    width:90%;
+}
+
+/* --- Branding --- */
+.branding {
+    text-align:center;
+    margin-bottom:20px;
+}
+.branding h1 {
+    font-size:2em;
+    font-weight:300;
+    letter-spacing:0.5em;
+    margin-bottom:10px;
+}
+.ring {
+    width:20px;
+    height:20px;
+    border:2px solid #fff;
+    border-radius:50%;
+    margin:0 auto 10px;
+    box-shadow:0 0 10px rgba(255,255,255,0.3);
+}
+.branding p.slogan {
+    font-size:0.9em;
+    opacity:0.8;
+}
+
+/* --- Wallet Section --- */
+.wallet {
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:20px;
+    text-align:center;
+}
+.wallet-address {
+    font-family:'Space Mono', monospace;
+    font-size:0.85em;
+    color:#ccc;
+    padding:5px 10px;
+    border-radius:4px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background: rgba(255,255,255,0.05);
+}
+.wallet button {
+    font-size:0.75em;
+    background:#333;
+    color:#fff;
+    border:none;
+    padding:3px 6px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.wallet button.copy.done {
+    background: #0f0;
+    color:#000;
+}
+
+/* --- Send Crypto Links --- */
+.crypto-links {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    margin-bottom:20px;
+}
+.crypto-links a {
+    text-decoration:none;
+    color:#fff;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.2);
+    transition:0.3s;
+    text-align:center;
+}
+.crypto-links a:hover {
+    color:#fff;
+    text-decoration:underline;
+}
+
+/* --- Generic Send --- */
+.send-container {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-bottom:20px;
+}
+.send-container button {
+    background:#333;
+    color:#fff;
+    border:none;
+    padding:8px 20px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.send-container button:hover {
+    background:#555;
+}
+
+/* --- Spinner & Message --- */
+.spinner {
+    border:3px solid rgba(255,255,255,0.3);
+    border-top:3px solid #fff;
+    border-radius:50%;
+    width:20px;
+    height:20px;
+    animation: spin 1s linear infinite;
+    display:inline-block;
+    margin-right:10px;
+}
+@keyframes spin { 100% { transform:rotate(360deg);} }
+
+.message {
+    font-size:0.9em;
+    margin-top:10px;
+    opacity:0.9;
+}
+
+/* --- Footer --- */
+.footer {
+    font-size:0.65em;
+    color: #aaa;
+    text-align:center;
+}
+
+/* --- Responsive --- */
+@media(max-width:480px){
+    .panel{padding:20px;}
+    .branding h1{font-size:1.5em; letter-spacing:0.3em;}
+}
+</style>
 </head>
 <body>
 
-<!-- Branding -->
-<div class="branding">
-    <h1>N O T H I N G</h1>
-    <p class="slogan">Send crypto. Receive nothing.</p>
-</div>
+<div class="panel">
+    <!-- Branding -->
+    <div class="branding">
+        <h1>N O T H I N G™</h1>
+        <div class="ring"></div>
+        <p class="slogan">Send crypto. Receive nothing.</p>
+    </div>
 
-<!-- Hero Ring -->
-<div class="hero-ring" id="heroRing"></div>
+    <!-- Wallet -->
+    <div class="wallet">
+        <div class="wallet-address" id="walletAddr">bc1qmxrmys828569xdgg77m5p4kfnf3sja1457k
+            <button id="copyBtn">COPY</button>
+        </div>
+    </div>
 
-<!-- Wallet Overlay -->
-<div class="wallet-overlay" id="walletOverlay">
-    <div class="wallet-content">
-        <div class="wallet-address" id="walletAddr">
-            7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a
-            <div class="copy-icon" id="copyBtn"></div>
-        </div>
-        <div class="crypto-buttons">
-            <button class="crypto-button" onclick="selectCrypto('SOL')">SOL</button>
-            <button class="crypto-button" onclick="selectCrypto('ETH')">ETH</button>
-            <button class="crypto-button" onclick="selectCrypto('BTC')">BTC</button>
-        </div>
-        <div id="qrcode"></div>
+    <!-- Crypto Links -->
+    <div class="crypto-links">
+        <a href="#" onclick="sendCrypto('SOL')">Send SOL</a>
+        <a href="#" onclick="sendCrypto('ETH')">Send ETH</a>
+        <a href="#" onclick="sendCrypto('BTC')">Send BTC</a>
+    </div>
+
+    <!-- Generic Send -->
+    <div class="send-container">
+        <span>Send</span>
+        <button onclick="sendGeneric()">Send</button>
+    </div>
+
+    <!-- Message -->
+    <div id="sendMessage" class="message"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        All transactions are irreversible. No refunds. No utility. No promises. Privacy Policy
     </div>
 </div>
 
-<p class="footer">
-    All transactions are irreversible. No refunds. No utility. No promises.
-</p>
-
 <script>
-// --- Wallet Data ---
-const ADDRESSES = {
-    "SOL": "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a",
-    "ETH": "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f",
-    "BTC": "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k"
-};
-let currentCrypto = "SOL";
-
-// --- Elements ---
-const heroRing = document.getElementById('heroRing');
-const walletOverlay = document.getElementById('walletOverlay');
-const walletAddr = document.getElementById('walletAddr');
+// --- Copy/DONE Logic ---
 const copyBtn = document.getElementById('copyBtn');
-const qrcodeDiv = document.getElementById('qrcode');
-
-// --- Ring Glow on Mouse Move ---
-document.addEventListener('mousemove', () => { heroRing.classList.add('glow'); });
-document.addEventListener('mouseout', () => { heroRing.classList.remove('glow'); });
-
-// --- Show Wallet Overlay on Ring Click ---
-heroRing.addEventListener('click', () => {
-    walletOverlay.classList.toggle('show');
-    updateWalletDisplay(currentCrypto);
-});
-
-// --- Copy Wallet ---
+const walletAddr = document.getElementById('walletAddr');
 copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(ADDRESSES[currentCrypto]).then(()=>{ alert("Copied: " + ADDRESSES[currentCrypto]); });
+    navigator.clipboard.writeText(walletAddr.textContent.replace("COPY","").trim());
+    copyBtn.textContent = "DONE";
+    copyBtn.classList.add("done");
+    setTimeout(() => {
+        copyBtn.textContent = "COPY";
+        copyBtn.classList.remove("done");
+    },1000);
 });
 
-// --- Select Crypto ---
-function selectCrypto(type){
-    currentCrypto = type;
-    updateWalletDisplay(type);
+// --- Send Crypto / Generic ---
+const sendMessage = document.getElementById('sendMessage');
+function sendCrypto(type){
+    sendMessage.innerHTML = '<span class="spinner"></span>Received Nothing.';
 }
-
-// --- Update Wallet Display ---
-function updateWalletDisplay(type){
-    walletAddr.childNodes[0].textContent = ADDRESSES[type];
-    generateQRCode(ADDRESSES[type]);
+function sendGeneric(){
+    sendMessage.innerHTML = '<span class="spinner"></span>Received Nothing.';
 }
-
-// --- QR Code ---
-function generateQRCode(text){
-    qrcodeDiv.innerHTML = "";
-    const img = document.createElement("img");
-    img.src = `https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl=${encodeURIComponent(text)}`;
-    qrcodeDiv.appendChild(img);
-}
-
-// Initialize with SOL
-updateWalletDisplay("SOL");
 </script>
 
 </body>
