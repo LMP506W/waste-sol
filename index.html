@@ -6,22 +6,6 @@
 <title>NOTHING™</title>
 <meta name="description" content="Send SOL, ETH, or BTC and receive NOTHING™. Irreversible, no refunds, no promises.">
 
-<!-- Open Graph -->
-<meta property="og:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
-<meta property="og:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
-<meta property="og:image" content="nothing.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://solwaste.online">
-<meta property="og:type" content="website">
-
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
-<meta name="twitter:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
-<meta name="twitter:image" content="nothing.png">
-
-<link rel="canonical" href="https://solwaste.online/">
 <style>
 body { font-family:sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:0; }
 .container { max-width:600px; margin:50px auto; }
@@ -52,7 +36,6 @@ canvas { border:2px solid #eee; border-radius:12px; }
 
     <div id="panel"></div>
     <div id="qrcode"></div>
-
     <div id="wallet-links"></div>
 
     <p class="footer">
@@ -68,8 +51,8 @@ const SOL_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
 const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
 const BTC_ADDRESS = "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k";
 
-// QR generator using Google Chart API
-function generateQRCode(text) {
+// Generate QR using Google Charts
+function generateQRCode(text){
     const qrcodeDiv = document.getElementById("qrcode");
     qrcodeDiv.innerHTML = "";
     const size = 200;
@@ -79,39 +62,43 @@ function generateQRCode(text) {
     qrcodeDiv.appendChild(img);
 }
 
-// Copy to clipboard
-function copyAddress(addr) {
+// Copy address
+function copyAddress(addr){
     navigator.clipboard.writeText(addr).then(()=>{ alert("Copied: "+addr); });
 }
 
-// --- Payment functions ---
-function openSolana() { showPaymentPanel("SOL", SOL_ADDRESS); }
-function openEthereum() { showPaymentPanel("ETH", ETH_ADDRESS); }
-function openBitcoin() { showPaymentPanel("BTC", BTC_ADDRESS); }
+// Open Payment Panels
+function openSolana(){ showPaymentPanel("SOL", SOL_ADDRESS, "solana"); }
+function openEthereum(){ showPaymentPanel("ETH", ETH_ADDRESS, "ethereum"); }
+function openBitcoin(){ showPaymentPanel("BTC", BTC_ADDRESS, "bitcoin"); }
 
-function showPaymentPanel(type, addr){
+function showPaymentPanel(type, addr, scheme){
     const panel = document.getElementById("panel");
     panel.innerHTML = `<p>Scan QR or click button to send <b>1 ${type}</b> (optional custom amount below)</p>`;
     generateQRCode(addr);
 
-    // Wallet links + copy + pay buttons
     const linksDiv = document.getElementById("wallet-links");
     linksDiv.innerHTML = `
         <p>${type} Address: <span class="address-code">${addr}</span>
         <button class="copy-button" onclick="copyAddress('${addr}')">Copy</button></p>
-        <p>Send 1 ${type}: <button onclick="payExact('${type}', '${addr}', 1)">Send 1</button></p>
+        <p>Send 1 ${type}: <button onclick="payExact('${scheme}','${addr}',1)">Send 1</button></p>
         <p>Or custom amount: <input type="number" id="custom-amount" class="amount-input" min="0.0001" step="0.0001" value="1">
-        <button onclick="payCustom('${type}', '${addr}')">Send</button></p>
+        <button onclick="payCustom('${scheme}','${addr}')">Send</button></p>
     `;
 }
 
-// Dummy functions for send buttons
-function payExact(type, addr, amount){
-    alert(`Pretending to send ${amount} ${type} to ${addr}. Implement real payment logic here.`);
+// Real wallet open using URI
+function payExact(scheme, addr, amount){
+    let uri = addr;
+    if(scheme === "ethereum") uri = `ethereum:${addr}?value=${amount*1e18}`; // 1 ETH = 10^18 wei
+    if(scheme === "solana") uri = `solana:${addr}?amount=${amount}`; // Phantom/Solana Pay
+    if(scheme === "bitcoin") uri = `bitcoin:${addr}?amount=${amount}`;
+    window.location.href = uri;
 }
-function payCustom(type, addr){
+
+function payCustom(scheme, addr){
     const val = document.getElementById("custom-amount").value;
-    alert(`Pretending to send ${val} ${type} to ${addr}. Implement real payment logic here.`);
+    payExact(scheme, addr, val);
 }
 </script>
 
