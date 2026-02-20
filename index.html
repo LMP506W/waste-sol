@@ -9,7 +9,7 @@
 <!-- Open Graph -->
 <meta property="og:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
 <meta property="og:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
-<meta property="og:image" content="https://solwaste.online/nothing.png">
+<meta property="og:image" content="nothing.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://solwaste.online">
@@ -19,38 +19,45 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
 <meta name="twitter:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
-<meta name="twitter:image" content="https://solwaste.online/nothing.png">
+<meta name="twitter:image" content="nothing.png">
 
 <link rel="canonical" href="https://solwaste.online/">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+<!-- Local Libraries -->
+<script src="./libs/qrcode.min.js"></script>
+<script src="./libs/ethers.min.js"></script>
+
 </head>
 <body>
 
 <div class="container">
-<h1>NOTHING™</h1>
-<p class="tagline">Send crypto. Receive nothing.</p>
+    <h1>NOTHING™</h1>
+    <p class="tagline">Send crypto. Receive nothing.</p>
 
-<div class="buttons">
-<button onclick="openSolana()" aria-label="Send SOL cryptocurrency">Send SOL</button>
-<button onclick="openEthereum()" aria-label="Send ETH cryptocurrency">Send ETH</button>
-<button onclick="openBitcoin()" aria-label="Send BTC cryptocurrency">Send BTC</button>
+    <div class="buttons">
+        <button onclick="openSolana()" aria-label="Send SOL cryptocurrency">Send SOL</button>
+        <button onclick="openEthereum()" aria-label="Send ETH cryptocurrency">Send ETH</button>
+        <button onclick="openBitcoin()" aria-label="Send BTC cryptocurrency">Send BTC</button>
+    </div>
+
+    <!-- Panel for dynamic content -->
+    <div id="panel"></div>
+
+    <!-- QR code container -->
+    <div id="qrcode"></div>
+
+    <p class="footer">
+        All transactions are irreversible.<br>
+        No refunds. No utility. No promises.<br>
+        <a href="privacy.html">Privacy Policy</a>
+    </p>
 </div>
 
-<div id="panel"></div>
-<div id="qrcode"></div>
-
-<p class="footer">
-All transactions are irreversible.<br>
-No refunds. No utility. No promises.<br>
-<a href="privacy.html">Privacy Policy</a>
-</p>
-</div>
-
+<!-- Custom Scripts -->
 <script src="solana.js" defer></script>
 <script src="ethereum.js" defer></script>
 <script src="bitcoin.js" defer></script>
-<script src="qrcode.min.js"></script>
+
 </body>
 </html>
