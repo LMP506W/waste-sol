@@ -3,189 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOTHING™ | The Live Void</title>
+    <title>NOTHING™ | Beyond the Void</title>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600&family=Space+Mono&display=swap');
 
+        :root {
+            --accent: #fff;
+            --bg: #000;
+        }
+
         body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Inter', sans-serif;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, #001a33 0%, #000000 100%);
-            color: #fff; overflow-x: hidden;
+            margin: 0; padding: 0; background: var(--bg);
+            color: #fff; font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth; overflow-x: hidden;
         }
 
-        .panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
-            padding: 40px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-            max-width: 440px; width: 90%; text-align: center;
-            z-index: 2;
+        /* Hintergrund-Canvas für Sterne (Venturi Style) */
+        #space-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; opacity: 0.6;
         }
 
+        section {
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+            box-sizing: border-box; text-align: center;
+        }
+
+        /* --- HERO SECTION --- */
         .branding h1 { 
-            font-size: 2.2em; font-weight: 100; letter-spacing: 1.2rem; 
-            margin: 0 0 10px 1.2rem; text-transform: uppercase; 
+            font-size: 3em; font-weight: 100; letter-spacing: 1.5rem; 
+            margin: 0; text-transform: uppercase; opacity: 0.8;
+        }
+
+        .ring-container {
+            position: relative; margin: 60px 0;
         }
 
         .ring { 
-            width: 70px; height: 70px; border: 1px solid #fff; border-radius: 50%; 
-            margin: 25px auto; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
+            width: 120px; height: 120px; border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 50%; transition: 1s cubic-bezier(0.16, 1, 0.3, 1); 
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .ring:hover { transform: scale(1.1); box-shadow: 0 0 40px rgba(255, 255, 255, 0.5); border-width: 2px; }
+        .ring:hover { transform: scale(1.05); border-color: #fff; box-shadow: 0 0 50px rgba(255,255,255,0.2); }
+        
+        .ring-inner {
+            width: 10px; height: 10px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 20px #fff;
+        }
 
         .btn-connect {
-            background: #fff; color: #000; border: none; padding: 14px;
-            border-radius: 14px; font-weight: 600; cursor: pointer; transition: 0.3s;
-            width: 100%; margin-bottom: 25px; font-size: 0.9em; letter-spacing: 1px;
+            background: none; border: 1px solid rgba(255,255,255,0.3); color: #fff;
+            padding: 10px 30px; border-radius: 30px; cursor: pointer;
+            letter-spacing: 2px; font-size: 0.7em; transition: 0.4s;
         }
-        .btn-connect:hover { background: #e0e0e0; transform: translateY(-2px); }
+        .btn-connect:hover { background: #fff; color: #000; }
 
-        /* LEADERBOARD */
-        .leaderboard {
-            margin-top: 10px; width: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 16px; padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-sizing: border-box;
-        }
-
-        .leader-title {
-            font-size: 0.65em; text-transform: uppercase; letter-spacing: 0.3rem;
-            color: rgba(255,255,255,0.3); margin-bottom: 15px; font-weight: 600;
+        /* --- LEADERBOARD SECTION --- */
+        .leader-container {
+            width: 100%; max-width: 600px;
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 40px; border-radius: 2px;
         }
 
-        .leader-list { width: 100%; }
-        
         .leader-item {
             display: flex; justify-content: space-between;
-            font-family: 'Space Mono', monospace; font-size: 0.75em;
-            padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
-            animation: fadeIn 1s ease forwards;
+            font-family: 'Space Mono', monospace; font-size: 0.8em;
+            padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            letter-spacing: 1px;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .leader-item.top { color: #ffd700; border-bottom: 1px solid #ffd700; }
 
-        .leader-item.top { color: #ffd700; font-weight: bold; }
+        /* Scroll-Indicator */
+        .scroll-down {
+            position: absolute; bottom: 30px; font-size: 0.6em;
+            letter-spacing: 4px; text-transform: uppercase; opacity: 0.3;
+        }
 
-        .status { font-size: 0.7em; color: rgba(255,255,255,0.3); margin-top: 20px; }
-        
-        .loader { display: none; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; font-size: 0.85em; }
-        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .footer { margin-top: 30px; font-size: 0.6em; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <div class="panel">
+    <canvas id="space-canvas"></canvas>
+
+    <section id="hero">
         <div class="branding">
-            <h1>Nothing™</h1>
-            <div class="ring" onclick="connectAndSend()" title="Sacrifice to the Void"></div>
-            <p style="opacity:0.5; font-size:0.85em; font-weight:300; margin-bottom: 25px;">The more you give, the less you have.</p>
+            <h1>Nothing</h1>
         </div>
-
-        <button class="btn-connect" id="walletBtn" onclick="connectWallet()">CONNECT PHANTOM</button>
-
-        <div class="leaderboard">
-            <div class="leader-title">Top Void Leader (Live)</div>
-            <div id="leaderList" class="leader-list">
-                <div style="font-size: 0.7em; opacity: 0.5;">Scanning Blockchain...</div>
+        
+        <div class="ring-container" onclick="connectAndSend()">
+            <div class="ring">
+                <div class="ring-inner"></div>
             </div>
         </div>
 
-        <div id="loader" class="loader">
-            <div class="spinner"></div>
-            <span id="loaderText">Accessing the void...</span>
-        </div>
-
-        <div id="statusMsg" class="status">Disconnected from Void</div>
+        <button class="btn-connect" id="walletBtn" onclick="connectWallet()">CONNECT WALLET</button>
+        <div id="loader" style="margin-top:20px; display:none; font-size: 0.7em; opacity:0.5;">Processing Void...</div>
         
-        <div class="footer">
-            7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a<br><br>
-            IRREVERSIBLE • NO REFUNDS • NOTHING
+        <div class="scroll-down">Scroll to explore the void</div>
+    </section>
+
+    <section id="leaders">
+        <h2 style="font-weight: 100; letter-spacing: 0.5rem; text-transform: uppercase; margin-bottom: 40px;">The High Donors</h2>
+        <div class="leader-container">
+            <div id="leaderList">
+                <div class="leader-item top"><span>1. 8xKz...Void</span><span>5.00 SOL</span></div>
+                <div class="leader-item"><span>2. 3nPa...92mL</span><span>1.50 SOL</span></div>
+                <div class="leader-item"><span>3. DqA2...9s1w</span><span>0.80 SOL</span></div>
+                <div style="padding-top:20px; font-size:0.6em; opacity:0.3;">Scanning real-time transactions...</div>
+            </div>
         </div>
-    </div>
+    </section>
 
     <script>
         const DEST_WALLET = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-        const RPC_URL = "https://api.mainnet-beta.solana.com";
-        const connection = new solanaWeb3.Connection(RPC_URL);
+        const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
         let walletAddress = null;
 
-        // 1. Leaderboard Live-Scan
-        async function updateLeaderboard() {
-            try {
-                const pubKey = new solanaWeb3.PublicKey(DEST_WALLET);
-                const signatures = await connection.getSignaturesForAddress(pubKey, { limit: 10 });
-                const leaderList = document.getElementById('leaderList');
-                leaderList.innerHTML = "";
+        // Sternenhimmel Animation (Einfach & Elegant)
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
 
-                if (signatures.length === 0) {
-                    leaderList.innerHTML = "<div style='font-size:0.7em; opacity:0.3;'>The void is currently empty.</div>";
-                    return;
-                }
-
-                let txs = [];
-                for (let sig of signatures) {
-                    const tx = await connection.getParsedTransaction(sig.signature, {maxSupportedTransactionVersion: 0});
-                    if (tx && tx.meta && !tx.meta.err) {
-                        const amount = (tx.meta.postBalances[1] - tx.meta.preBalances[1]) / 1000000000;
-                        if (amount > 0) {
-                            const sender = tx.transaction.message.accountKeys[0].pubkey.toString();
-                            txs.push({ sender, amount });
-                        }
-                    }
-                }
-
-                // Sortieren nach Betrag (Top Donor zuerst)
-                txs.sort((a, b) => b.amount - a.amount);
-
-                txs.slice(0, 5).forEach((item, index) => {
-                    const div = document.createElement('div');
-                    div.className = `leader-item ${index === 0 ? 'top' : ''}`;
-                    const shortAddr = item.sender.slice(0,4) + "..." + item.sender.slice(-4);
-                    div.innerHTML = `<span>${index + 1}. ${shortAddr}</span><span>${item.amount.toFixed(2)} SOL</span>`;
-                    leaderList.appendChild(div);
+        function initStars() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            for(let i=0; i<200; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5,
+                    blink: Math.random() * 0.05
                 });
-
-            } catch (err) {
-                console.error("Scan error:", err);
             }
         }
 
-        // 2. Wallet Connect
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#fff";
+            stars.forEach(s => {
+                ctx.globalAlpha = Math.abs(Math.sin(Date.now() * 0.001 + s.blink * 100));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('resize', initStars);
+        initStars(); drawStars();
+
+        // Solana Wallet Logik
         async function connectWallet() {
-            if (window.solana && window.solana.isPhantom) {
-                try {
-                    const resp = await window.solana.connect();
-                    walletAddress = resp.publicKey.toString();
-                    document.getElementById('walletBtn').innerText = "CONNECTED: " + walletAddress.slice(0,4) + "..";
-                    document.getElementById('statusMsg').innerText = "Ready to lose everything.";
-                } catch (err) { console.error(err); }
-            } else {
-                window.open("https://phantom.app/", "_blank");
+            if (window.solana) {
+                const resp = await window.solana.connect();
+                walletAddress = resp.publicKey.toString();
+                document.getElementById('walletBtn').innerText = "LINKED: " + walletAddress.slice(0,6);
             }
         }
 
-        // 3. Transaktion
         async function connectAndSend() {
-            if (!walletAddress) { await connectWallet(); return; }
-            
-            const amount = prompt("How much SOL do you want to lose forever?", "0.1");
-            if (!amount || isNaN(amount)) return;
+            if (!walletAddress) { await connectWallet(); }
+            const amount = prompt("Amount of SOL to sacrifice:", "0.1");
+            if (!amount) return;
 
-            const loader = document.getElementById('loader');
-            const loaderText = document.getElementById('loaderText');
-            loader.style.display = 'flex';
-
+            document.getElementById('loader').style.display = "block";
             try {
                 const transaction = new solanaWeb3.Transaction().add(
                     solanaWeb3.SystemProgram.transfer({
@@ -194,26 +181,14 @@
                         lamports: parseFloat(amount) * solanaWeb3.LAMPORTS_PER_SOL,
                     })
                 );
-
                 const { signature } = await window.solana.signAndSendTransaction(transaction);
-                loaderText.innerText = "Confirming on Blockchain...";
                 await connection.confirmTransaction(signature);
-                
-                loaderText.innerText = "Success. You received Nothing.";
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                    updateLeaderboard();
-                }, 3000);
-            } catch (err) {
-                loaderText.innerText = "Void rejected transaction.";
-                setTimeout(() => loader.style.display = 'none', 3000);
+                alert("The void has accepted your gift.");
+                location.reload(); 
+            } catch (e) {
+                document.getElementById('loader').style.display = "none";
             }
         }
-
-        // Initialer Scan
-        updateLeaderboard();
-        // Alle 30 Sekunden aktualisieren
-        setInterval(updateLeaderboard, 30000);
     </script>
 </body>
 </html>
