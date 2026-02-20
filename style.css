@@ -1,146 +1,181 @@
-/* --- AI.com Inspired Luxury Minimalist Updated --- */
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@300&display=swap');
+/* --- High-End Luxury Minimalist 4K-Ready --- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap');
 
-body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    width: 100vw;
-    background: #000000;
-    color: #fff;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body, html {
+    height: 100%;
+    width: 100%;
+    background: #000000; /* absolute black */
+    color: #FFFFFF;
+    font-family: 'Roboto Mono', monospace;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    font-family: 'Space Mono', monospace;
     overflow: hidden;
 }
 
-/* Branding Text */
+/* Branding */
 .branding {
+    position: absolute;
+    top: 5%;
     text-align: center;
-    max-width: 90%;
     opacity: 0;
-    animation: fadeIn 1.5s forwards 0.3s;
+    animation: fadeIn 2s forwards 0.3s;
 }
 .branding h1 {
     font-size: 6vw;
     font-weight: 300;
-    letter-spacing: 0.5em;
-    margin: 0;
-    transition: color 0.3s ease;
+    letter-spacing: 2em;
 }
 .branding p.slogan {
     font-size: 1.5vw;
     font-weight: 300;
-    color: #888;
-    margin-top: 1em;
-    transition: color 0.3s ease;
+    color: #FFFFFF;
+    opacity: 0.6;
+    margin-top: 0.5em;
 }
 
-/* Fade-in keyframes */
+/* Fade-in */
 @keyframes fadeIn {
     0% { opacity: 0; transform: translateY(20px); }
     100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Buttons Section */
-.buttons {
-    display: flex;
-    gap: 1em;
-    margin-top: 4em;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-.buttons button {
-    font-family: 'Space Mono', monospace;
-    font-weight: 300;
-    font-size: 1em;
-    padding: 0.8em 2em;
-    border: 1px solid #fff;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-}
-.buttons button::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(255,255,255,0.05);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s ease;
-}
-.buttons button:hover::before {
-    transform: scaleX(1);
-}
-.buttons button:hover {
-    background: #fff;
-    color: #000;
-    border-color: #fff;
-}
-
-/* Payment Panel */
-.payment-panel {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 2em;
-    gap: 1em;
-    text-align: center;
-    opacity: 0;
-    animation: fadeIn 1s forwards 0.1s;
-}
-.payment-panel.show {
-    display: flex;
-}
-.payment-panel #qrcode img {
-    width: 180px;
-    height: 180px;
+/* Hero Ring */
+.hero-ring {
+    width: 350px;
+    height: 350px;
+    border: 5px solid #FFFFFF;
     border-radius: 50%;
-    border: 2px solid #fff;
-    transition: transform 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.payment-panel #qrcode img:hover {
+.hero-ring.glow {
+    box-shadow: 0 0 60px rgba(255,255,255,0.3);
     transform: scale(1.05);
 }
-.copy-button {
-    margin-left: 0.5em;
-    padding: 0.3em 0.6em;
-    border: 1px solid #fff;
-    background: transparent;
-    color: #fff;
+
+/* Ring subtle hover glow */
+.hero-ring::before {
+    content: '';
+    position: absolute;
+    top: -15px; left: -15px;
+    width: calc(100% + 30px);
+    height: calc(100% + 30px);
+    border-radius: 50%;
+    box-shadow: 0 0 80px rgba(255,255,255,0.05);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.hero-ring:hover::before {
+    opacity: 1;
+}
+
+/* Wallet Overlay */
+.wallet-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.75);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+.wallet-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Wallet Content */
+.wallet-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2em;
+}
+
+.wallet-address {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.5em;
+    letter-spacing: 0.1em;
+    border: 1px solid #FFFFFF;
+    padding: 0.5em 1em;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.copy-icon {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #FFFFFF;
+    display: inline-block;
     cursor: pointer;
     transition: all 0.3s ease;
 }
-.copy-button:hover {
-    background: #fff;
-    color: #000;
+.copy-icon:hover {
+    background: #FFFFFF;
+    transform: scale(1.1);
 }
-.amount-input {
-    width: 60px;
-    text-align: center;
-    background: #111;
-    color: #fff;
-    border: 1px solid #fff;
-    border-radius: 4px;
+
+/* Crypto Buttons */
+.crypto-buttons {
+    display: flex;
+    gap: 2em;
+    justify-content: center;
+    flex-wrap: wrap;
 }
+.crypto-button {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 300;
+    font-size: 1.2em;
+    border: 1px solid #FFFFFF;
+    background: transparent;
+    color: #FFFFFF;
+    padding: 0.5em 2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.crypto-button:hover {
+    background: #FFFFFF;
+    color: #000000;
+}
+
+/* QR Code */
+#qrcode img {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    transition: transform 0.3s ease;
+}
+#qrcode img:hover { transform: scale(1.05); }
 
 /* Footer */
 .footer {
-    margin-top: 6em;
-    font-size: 0.9em;
-    color: #555;
+    position: absolute;
+    bottom: 2%;
+    font-size: 1em;
+    color: #FFFFFF;
     text-align: center;
 }
 
-/* Responsive Typography */
-@media (max-width: 768px){
-    .branding h1 { font-size: 10vw; letter-spacing: 0.3em; }
+/* Responsive */
+@media(max-width: 768px){
+    .branding h1 { font-size: 12vw; letter-spacing: 1em; }
     .branding p.slogan { font-size: 3vw; }
-    .buttons button { padding: 0.6em 1.5em; font-size: 0.9em; }
+    .crypto-button { padding: 0.4em 1.5em; font-size: 1em; }
+    #qrcode img { width: 160px; height: 160px; }
 }
