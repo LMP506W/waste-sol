@@ -7,159 +7,159 @@
 <meta name="description" content="Send SOL, ETH, or BTC and receive NOTHING™. Irreversible, no refunds, no promises.">
 
 <style>
-/* --- Luxury Minimalist / Brutalismus Design --- */
+/* --- Ultra-Minimalist Luxury Style --- */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@300&display=swap');
+
 body {
-    background: #000000;
-    color: #ffffff;
-    font-family: 'Helvetica Now', sans-serif;
     margin: 0;
     padding: 0;
     height: 100vh;
-    overflow: hidden;
+    background: #000000; /* infinite void */
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     flex-direction: column;
+    font-family: 'Space Mono', monospace;
+    color: #fff;
+    overflow: hidden;
 }
 
-/* Hero Ring */
-.the-void {
-    width: 300px;
-    height: 300px;
-    border: 40px solid #fff;
+.hero-ring {
+    width: 350px;
+    height: 350px;
+    border: 25px solid #fff;
     border-radius: 50%;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: pulse 4s infinite alternate;
-}
-.the-void:hover {
-    border-width: 5px;
-    cursor: pointer;
+    box-sizing: border-box;
+    animation: ringPulse 6s infinite alternate ease-in-out;
+    filter: drop-shadow(0 0 3px rgba(255,255,255,0.2));
 }
 
-/* Ring pulse animation */
-@keyframes pulse {
-    0% { border-width: 40px; opacity: 0.9; }
-    100% { border-width: 50px; opacity: 1; }
+@keyframes ringPulse {
+    0% { transform: scale(1); opacity: 0.95; border-width: 25px; }
+    100% { transform: scale(1.05); opacity: 1; border-width: 30px; }
 }
 
-/* Centered content branding */
-.content {
+.branding {
     position: absolute;
+    bottom: 15%;
     text-align: center;
-    bottom: 10%;
     width: 100%;
 }
-h1 {
-    font-size: 3rem;
+
+.branding h1 {
+    font-family: 'Space Mono', monospace;
+    font-weight: 300;
+    font-size: 2.5rem;
     letter-spacing: 0.5em;
-    text-transform: uppercase;
-    font-weight: 200;
     margin: 0;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255,255,255,0.05); /* faint aura */
 }
-.slogan {
-    color: #555;
+
+.branding p.slogan {
+    font-family: 'Space Mono', monospace;
+    font-weight: 300;
     font-size: 0.9rem;
-    margin-top: 10px;
-}
-
-/* Buttons - thin luxury outline */
-.buttons button {
-    margin: 0.5em;
-    padding: 1em 2em;
-    font-size: 1em;
-    font-weight: 400;
-    border: 1px solid #fff;
-    background: transparent;
+    letter-spacing: 0.2em;
+    margin-top: 0.5em;
     color: #fff;
-    cursor: pointer;
-    border-radius: 0;
-    transition: all 0.3s;
-}
-.buttons button:hover {
-    background: #fff;
-    color: #000;
+    text-shadow: 0 0 5px rgba(255,255,255,0.05);
 }
 
-/* QR Code and Payment Panel */
-#panel, #wallet-links, #qrcode {
-    margin-top: 2em;
+/* Payment Section (hidden by default, appears below ring) */
+.payment-panel {
+    position: absolute;
+    top: 65%;
     text-align: center;
-    font-size: 1.1em;
+    display: none; /* only visible when user clicks ring */
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
 }
-#qrcode img {
-    margin-top: 1em;
-    border: 2px solid #fff;
+
+.payment-panel #qrcode img {
     border-radius: 50%;
+    border: 2px solid #fff;
+    width: 180px;
+    height: 180px;
 }
-.copy-button {
-    margin-left: 0.5em;
-    padding: 0.2em 0.5em;
-    font-size: 0.8em;
-    border-radius: 5px;
-    border: 1px solid #fff;
+
+.payment-panel button, .payment-panel .copy-button {
+    font-family: 'Space Mono', monospace;
     background: transparent;
+    border: 1px solid #fff;
     color: #fff;
+    padding: 0.6em 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
-.copy-button:hover {
+.payment-panel button:hover, .payment-panel .copy-button:hover {
     background: #fff;
     color: #000;
 }
 
-/* Footer */
-.footer {
-    margin-top: 3em;
-    font-size: 0.9em;
-    color: #555;
-}
 .amount-input {
     width: 60px;
-    margin-left: 0.5em;
     text-align: center;
     background: #111;
     color: #fff;
     border: 1px solid #fff;
     border-radius: 4px;
 }
+
 </style>
 </head>
 <body>
 
 <!-- Hero Ring -->
-<div class="the-void"></div>
+<div class="hero-ring" id="heroRing"></div>
 
-<!-- Branding -->
-<div class="content">
-    <h1>Nothing™</h1>
+<!-- Branding Text -->
+<div class="branding">
+    <h1>NOTHING™</h1>
     <p class="slogan">Send crypto. Receive nothing.</p>
 </div>
 
-<!-- Buttons -->
-<div class="buttons">
-    <button onclick="openSolana()">Send SOL</button>
-    <button onclick="openEthereum()">Send ETH</button>
-    <button onclick="openBitcoin()">Send BTC</button>
+<!-- Payment Panel -->
+<div class="payment-panel" id="paymentPanel">
+    <div id="qrcode"></div>
+    <p>Wallet Address: <span class="address-code" id="walletAddr"></span> 
+        <button class="copy-button" id="copyBtn">Copy</button></p>
+    <p>Send 1 <span id="cryptoType">SOL</span> 
+        <button id="send1Btn">Send 1</button></p>
+    <p>Or custom amount: <input type="number" id="customAmount" class="amount-input" value="1" min="0.0001" step="0.0001">
+        <button id="sendCustomBtn">Send</button></p>
 </div>
 
-<!-- Panels -->
-<div id="panel"></div>
-<div id="qrcode"></div>
-<div id="wallet-links"></div>
-
-<p class="footer">
-    All transactions are irreversible.<br>
-    No refunds. No utility. No promises.<br>
-    <a href="privacy.html" style="color:#fff; text-decoration:underline;">Privacy Policy</a>
-</p>
-
 <script>
-// --- Addresses ---
-const SOL_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
-const BTC_ADDRESS = "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k";
+// Addresses
+const ADDRESSES = {
+    "SOL": "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a",
+    "ETH": "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f",
+    "BTC": "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k"
+};
 
-// --- QR Generator ---
+// Elements
+const heroRing = document.getElementById('heroRing');
+const paymentPanel = document.getElementById('paymentPanel');
+const walletAddrSpan = document.getElementById('walletAddr');
+const cryptoTypeSpan = document.getElementById('cryptoType');
+const qrcodeDiv = document.getElementById('qrcode');
+const copyBtn = document.getElementById('copyBtn');
+const send1Btn = document.getElementById('send1Btn');
+const sendCustomBtn = document.getElementById('sendCustomBtn');
+const customAmountInput = document.getElementById('customAmount');
+
+let currentCrypto = "SOL";
+
+// --- Show Payment Panel on Ring Click ---
+heroRing.addEventListener('click', () => {
+    paymentPanel.style.display = "flex";
+    selectCrypto(currentCrypto);
+});
+
+// --- QR Code generator ---
 function generateQRCode(text){
-    const qrcodeDiv = document.getElementById("qrcode");
     qrcodeDiv.innerHTML = "";
     const size = 200;
     const img = document.createElement("img");
@@ -169,43 +169,34 @@ function generateQRCode(text){
 }
 
 // --- Copy Address ---
-function copyAddress(addr){
-    navigator.clipboard.writeText(addr).then(()=>{ alert("Copied: "+addr); });
+copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(walletAddrSpan.textContent).then(()=>{ alert("Copied: " + walletAddrSpan.textContent); });
+});
+
+// --- Send Buttons ---
+send1Btn.addEventListener('click', () => { sendCrypto(1); });
+sendCustomBtn.addEventListener('click', () => { sendCrypto(customAmountInput.value); });
+
+// --- Select Crypto (SOL/ETH/BTC) ---
+function selectCrypto(type){
+    currentCrypto = type;
+    walletAddrSpan.textContent = ADDRESSES[type];
+    cryptoTypeSpan.textContent = type;
+    generateQRCode(ADDRESSES[type]);
 }
 
-// --- Open Panels ---
-function openSolana(){ showPaymentPanel("SOL", SOL_ADDRESS, "solana"); }
-function openEthereum(){ showPaymentPanel("ETH", ETH_ADDRESS, "ethereum"); }
-function openBitcoin(){ showPaymentPanel("BTC", BTC_ADDRESS, "bitcoin"); }
-
-function showPaymentPanel(type, addr, scheme){
-    const panel = document.getElementById("panel");
-    panel.innerHTML = `<p>Scan QR or click button to send <b>1 ${type}</b> (optional custom amount below)</p>`;
-    generateQRCode(addr);
-
-    const linksDiv = document.getElementById("wallet-links");
-    linksDiv.innerHTML = `
-        <p>${type} Address: <span class="address-code">${addr}</span>
-        <button class="copy-button" onclick="copyAddress('${addr}')">Copy</button></p>
-        <p>Send 1 ${type}: <button onclick="payExact('${scheme}','${addr}',1)">Send 1</button></p>
-        <p>Or custom amount: <input type="number" id="custom-amount" class="amount-input" min="0.0001" step="0.0001" value="1">
-        <button onclick="payCustom('${scheme}','${addr}')">Send</button></p>
-    `;
-}
-
-// --- Wallet Payment ---
-function payExact(scheme, addr, amount){
+// --- Send Crypto via URI ---
+function sendCrypto(amount){
+    let addr = ADDRESSES[currentCrypto];
     let uri = addr;
-    if(scheme === "ethereum") uri = `ethereum:${addr}?value=${amount*1e18}`;
-    if(scheme === "solana") uri = `solana:${addr}?amount=${amount}`;
-    if(scheme === "bitcoin") uri = `bitcoin:${addr}?amount=${amount}`;
+    if(currentCrypto==="ETH") uri = `ethereum:${addr}?value=${amount*1e18}`;
+    if(currentCrypto==="SOL") uri = `solana:${addr}?amount=${amount}`;
+    if(currentCrypto==="BTC") uri = `bitcoin:${addr}?amount=${amount}`;
     window.location.href = uri;
 }
 
-function payCustom(scheme, addr){
-    const val = document.getElementById("custom-amount").value;
-    payExact(scheme, addr, val);
-}
+// Optional: Start panel with SOL selected
+selectCrypto("SOL");
 </script>
 
 </body>
