@@ -4,44 +4,49 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOTHING™</title>
+<meta name="description" content="Send SOL, ETH, or BTC and receive NOTHING™. Irreversible, no refunds, no promises.">
 
+<!-- Open Graph -->
+<meta property="og:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
+<meta property="og:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
+<meta property="og:image" content="https://solwaste.online/nothing.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://solwaste.online">
+<meta property="og:type" content="website">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NOTHING™ – Send crypto. Receive NOTHING.">
+<meta name="twitter:description" content="Send SOL, ETH, or BTC and get absolutely nothing. No refunds. No promises.">
+<meta name="twitter:image" content="https://solwaste.online/nothing.png">
+
+<link rel="canonical" href="https://solwaste.online/">
 <link rel="stylesheet" href="style.css">
-
-<!-- Favicon -->
-<link rel="icon" type="image/png" href="nothing.png">
-<link rel="apple-touch-icon" sizes="180x180" href="nothing.png">
-
-<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
 
 <div class="container">
-
 <h1>NOTHING™</h1>
-
-<p class="tagline">
-Send crypto. Receive nothing.
-</p>
+<p class="tagline">Send crypto. Receive nothing.</p>
 
 <div class="buttons">
-<button onclick="openSolana()">Send SOL</button>
-<button onclick="openEthereum()">Send ETH</button>
-<button onclick="openBitcoin()">Send BTC</button>
+<button onclick="openSolana()" aria-label="Send SOL cryptocurrency">Send SOL</button>
+<button onclick="openEthereum()" aria-label="Send ETH cryptocurrency">Send ETH</button>
+<button onclick="openBitcoin()" aria-label="Send BTC cryptocurrency">Send BTC</button>
 </div>
 
 <div id="panel"></div>
 
 <p class="footer">
-All transactions are irreversible.  
-No refunds. No utility. No promises.
+All transactions are irreversible.<br>
+No refunds. No utility. No promises.<br>
+<a href="privacy.html">Privacy Policy</a>
 </p>
-
 </div>
 
-<script src="solana.js"></script>
-<script src="ethereum.js"></script>
-<script src="bitcoin.js"></script>
-
+<script src="solana.min.js" defer></script>
+<script src="ethereum.min.js" defer></script>
+<script src="bitcoin.min.js" defer></script>
 </body>
 </html>
