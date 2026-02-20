@@ -8,4 +8,8 @@
     <loc>https://solwaste.online/privacy.html</loc>
     <priority>0.5</priority>
   </url>
+  <url>
+    <loc>https://solwaste.online/index-security.html</loc>
+    <priority>0.5</priority>
+  </url>
 </urlset>
