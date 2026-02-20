@@ -23,11 +23,6 @@
 
 <link rel="canonical" href="https://solwaste.online/">
 <link rel="stylesheet" href="style.css">
-
-<!-- Local Libraries -->
-<script src="./libs/qrcode.min.js"></script>
-<script src="./libs/ethers.min.js"></script>
-
 </head>
 <body>
 
@@ -54,10 +49,55 @@
     </p>
 </div>
 
-<!-- Custom Scripts -->
-<script src="solana.js" defer></script>
-<script src="ethereum.js" defer></script>
-<script src="bitcoin.js" defer></script>
+<!-- JS Scripts -->
+<script>
+// Your addresses
+const SOL_ADDRESS = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+const ETH_ADDRESS = "0x2456d6Be3F655Ee9c79b404B1B1431b89dF32E7f";
+const BTC_ADDRESS = "bc1qvmxrmyspaf8259xdgrg77pn504knf3sjal457k";
+
+// QR Code generator using Google Chart API
+function generateQRCode(text) {
+    const qrcodeDiv = document.getElementById("qrcode");
+    qrcodeDiv.innerHTML = "";
+    const size = 200;
+    const img = document.createElement("img");
+    img.src = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`;
+    img.alt = "QR Code";
+    qrcodeDiv.appendChild(img);
+}
+
+// Solana
+function openSolana() {
+    document.getElementById("panel").innerHTML = "<p>Scan to send SOL:</p>";
+    generateQRCode(SOL_ADDRESS);
+}
+
+// Ethereum
+function openEthereum() {
+    const panel = document.getElementById("panel");
+    panel.innerHTML = "<p>Connect your wallet or scan QR to send ETH:</p>";
+
+    if (window.ethereum) {
+        window.ethereum.request({ method: 'eth_requestAccounts' })
+        .then(accounts => {
+            panel.innerHTML += `<p>Connected: ${accounts[0]}</p>`;
+        })
+        .catch(err => {
+            panel.innerHTML += `<p>Wallet connection failed. Scan QR:</p>`;
+            generateQRCode(ETH_ADDRESS);
+        });
+    } else {
+        generateQRCode(ETH_ADDRESS);
+    }
+}
+
+// Bitcoin
+function openBitcoin() {
+    document.getElementById("panel").innerHTML = "<p>Scan to send BTC:</p>";
+    generateQRCode(BTC_ADDRESS);
+}
+</script>
 
 </body>
 </html>
