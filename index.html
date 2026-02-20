@@ -69,7 +69,13 @@ canvas{
 
 <h1>The Most Honest Crypto Project Ever Built.</h1>
 <p>Send Money. Receive Nothing.</p>
-
+<div id="receiptSection" style="display:none; text-align:center; margin-top:40px;">
+    <h2>Official NOTHING™ Receipt</h2>
+    <canvas id="receiptCanvas" width="500" height="300" style="background:white;"></canvas><br><br>
+    <button onclick="downloadReceipt()">Download Receipt</button>
+    <button onclick="shareX()">Share on X</button>
+</div>
+    
 <button class="pay-btn" onclick="simulatePayment()">Send Nothing</button>
 
 <div id="counter">
