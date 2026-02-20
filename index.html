@@ -7,97 +7,94 @@
 <meta name="description" content="Send SOL, ETH, or BTC and receive NOTHING™. Irreversible, no refunds, no promises.">
 
 <style>
-/* --- Ultra-Minimalist Luxury Style --- */
+/* --- AI.com Inspired Luxury Minimalist --- */
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@300&display=swap');
 
 body {
     margin: 0;
     padding: 0;
     height: 100vh;
-    background: #000000; /* infinite void */
+    width: 100vw;
+    background: #000;
+    color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     font-family: 'Space Mono', monospace;
-    color: #fff;
     overflow: hidden;
 }
 
-.hero-ring {
-    width: 350px;
-    height: 350px;
-    border: 25px solid #fff;
-    border-radius: 50%;
-    box-sizing: border-box;
-    animation: ringPulse 6s infinite alternate ease-in-out;
-    filter: drop-shadow(0 0 3px rgba(255,255,255,0.2));
-}
-
-@keyframes ringPulse {
-    0% { transform: scale(1); opacity: 0.95; border-width: 25px; }
-    100% { transform: scale(1.05); opacity: 1; border-width: 30px; }
-}
-
+/* Branding Text */
 .branding {
-    position: absolute;
-    bottom: 15%;
     text-align: center;
-    width: 100%;
+    max-width: 90%;
 }
-
 .branding h1 {
-    font-family: 'Space Mono', monospace;
+    font-size: 6vw;
     font-weight: 300;
-    font-size: 2.5rem;
     letter-spacing: 0.5em;
     margin: 0;
-    color: #fff;
-    text-shadow: 0 0 8px rgba(255,255,255,0.05); /* faint aura */
+}
+.branding p.slogan {
+    font-size: 1.5vw;
+    font-weight: 300;
+    color: #888;
+    margin-top: 1em;
 }
 
-.branding p.slogan {
+/* Buttons Section */
+.buttons {
+    display: flex;
+    gap: 1em;
+    margin-top: 4em;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.buttons button {
     font-family: 'Space Mono', monospace;
     font-weight: 300;
-    font-size: 0.9rem;
-    letter-spacing: 0.2em;
-    margin-top: 0.5em;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(255,255,255,0.05);
-}
-
-/* Payment Section (hidden by default, appears below ring) */
-.payment-panel {
-    position: absolute;
-    top: 65%;
-    text-align: center;
-    display: none; /* only visible when user clicks ring */
-    flex-direction: column;
-    align-items: center;
-    gap: 1em;
-}
-
-.payment-panel #qrcode img {
-    border-radius: 50%;
-    border: 2px solid #fff;
-    width: 180px;
-    height: 180px;
-}
-
-.payment-panel button, .payment-panel .copy-button {
-    font-family: 'Space Mono', monospace;
-    background: transparent;
+    font-size: 1em;
+    padding: 0.8em 2em;
     border: 1px solid #fff;
+    background: transparent;
     color: #fff;
-    padding: 0.6em 1em;
     cursor: pointer;
     transition: all 0.3s ease;
 }
-.payment-panel button:hover, .payment-panel .copy-button:hover {
+.buttons button:hover {
     background: #fff;
     color: #000;
 }
 
+/* Payment Panel */
+.payment-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2em;
+    gap: 1em;
+    text-align: center;
+}
+.payment-panel #qrcode img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+.copy-button {
+    margin-left: 0.5em;
+    padding: 0.3em 0.6em;
+    border: 1px solid #fff;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.copy-button:hover {
+    background: #fff;
+    color: #000;
+}
 .amount-input {
     width: 60px;
     text-align: center;
@@ -107,20 +104,28 @@ body {
     border-radius: 4px;
 }
 
+/* Footer */
+.footer {
+    margin-top: 6em;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+}
 </style>
 </head>
 <body>
 
-<!-- Hero Ring -->
-<div class="hero-ring" id="heroRing"></div>
-
-<!-- Branding Text -->
 <div class="branding">
     <h1>NOTHING™</h1>
     <p class="slogan">Send crypto. Receive nothing.</p>
 </div>
 
-<!-- Payment Panel -->
+<div class="buttons">
+    <button onclick="openSolana()">Send SOL</button>
+    <button onclick="openEthereum()">Send ETH</button>
+    <button onclick="openBitcoin()">Send BTC</button>
+</div>
+
 <div class="payment-panel" id="paymentPanel">
     <div id="qrcode"></div>
     <p>Wallet Address: <span class="address-code" id="walletAddr"></span> 
@@ -131,6 +136,12 @@ body {
         <button id="sendCustomBtn">Send</button></p>
 </div>
 
+<p class="footer">
+    All transactions are irreversible.<br>
+    No refunds. No utility. No promises.<br>
+    <a href="privacy.html" style="color:#fff; text-decoration:underline;">Privacy Policy</a>
+</p>
+
 <script>
 // Addresses
 const ADDRESSES = {
@@ -140,7 +151,6 @@ const ADDRESSES = {
 };
 
 // Elements
-const heroRing = document.getElementById('heroRing');
 const paymentPanel = document.getElementById('paymentPanel');
 const walletAddrSpan = document.getElementById('walletAddr');
 const cryptoTypeSpan = document.getElementById('cryptoType');
@@ -152,11 +162,18 @@ const customAmountInput = document.getElementById('customAmount');
 
 let currentCrypto = "SOL";
 
-// --- Show Payment Panel on Ring Click ---
-heroRing.addEventListener('click', () => {
+// --- Show Payment Panel on Button Click ---
+function openSolana(){ showPaymentPanel("SOL"); }
+function openEthereum(){ showPaymentPanel("ETH"); }
+function openBitcoin(){ showPaymentPanel("BTC"); }
+
+function showPaymentPanel(type){
+    currentCrypto = type;
     paymentPanel.style.display = "flex";
-    selectCrypto(currentCrypto);
-});
+    walletAddrSpan.textContent = ADDRESSES[type];
+    cryptoTypeSpan.textContent = type;
+    generateQRCode(ADDRESSES[type]);
+}
 
 // --- QR Code generator ---
 function generateQRCode(text){
@@ -177,14 +194,6 @@ copyBtn.addEventListener('click', () => {
 send1Btn.addEventListener('click', () => { sendCrypto(1); });
 sendCustomBtn.addEventListener('click', () => { sendCrypto(customAmountInput.value); });
 
-// --- Select Crypto (SOL/ETH/BTC) ---
-function selectCrypto(type){
-    currentCrypto = type;
-    walletAddrSpan.textContent = ADDRESSES[type];
-    cryptoTypeSpan.textContent = type;
-    generateQRCode(ADDRESSES[type]);
-}
-
 // --- Send Crypto via URI ---
 function sendCrypto(amount){
     let addr = ADDRESSES[currentCrypto];
@@ -195,8 +204,8 @@ function sendCrypto(amount){
     window.location.href = uri;
 }
 
-// Optional: Start panel with SOL selected
-selectCrypto("SOL");
+// --- Initialize with SOL ---
+showPaymentPanel("SOL");
 </script>
 
 </body>
