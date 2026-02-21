@@ -292,7 +292,7 @@
 
         try {
             const resp = await window.solana.connect();
-            const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+            const connection = new solanaWeb3.Connection("https://mainnet.helius-rpc.com/?api-key=a5cc70f2-b240-4742-8185-c787db94d77f");
             
             log("INITIATING NEURAL LINK...");
             
