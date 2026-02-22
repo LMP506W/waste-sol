@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SOLWASTE | NEURAL SYNC</title>
+    <title>SOLWASTE | NEURAL PULSE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
@@ -11,322 +11,285 @@
     
     <style>
         :root {
-            --accent: #bc13fe; 
-            --success: #00ffbd;
-            --danger: #ff003c;
-            --bg: #0b0510; 
-            --glass: rgba(20, 10, 30, 0.6); 
-            --border: rgba(188, 19, 254, 0.3);
+            --accent: #bc13fe; --success: #00ffbd; --danger: #ff003c;
+            --bg: #050208; --glass: rgba(10, 5, 20, 0.7); --border: rgba(188, 19, 254, 0.2);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: radial-gradient(circle at center, #1a0d2b 0%, var(--bg) 100%);
-            color: #fff; font-family: 'Inter', sans-serif; 
-            overflow-x: hidden; min-height: 100vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
+
+        /* --- CRT & SCANLINE OVERLAY --- */
+        body::before {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2000; background-size: 100% 2px, 3px 100%; pointer-events: none;
         }
 
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1; }
-        .viewport { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; pointer-events: none; }
-        .interactive { pointer-events: all; }
+        #ambient-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: blur(100px); opacity: 0.3; pointer-events: none; }
 
-        header { padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-family: 'Syncopate', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #fff; text-shadow: 0 0 20px rgba(188, 19, 254, 0.7); cursor: pointer; }
+        nav {
+            position: fixed; top: 0; width: 100%; padding: 40px 60px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+        }
+        .nav-links { display: flex; gap: 50px; }
+        .nav-item { 
+            font-family: 'Syncopate'; font-size: 10px; letter-spacing: 4px; color: rgba(255,255,255,0.3); 
+            cursor: pointer; transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative;
+        }
+        .nav-item::after { content: ''; position: absolute; bottom: -10px; left: 0; width: 0%; height: 1px; background: var(--accent); transition: 0.5s; box-shadow: 0 0 10px var(--accent); }
+        .nav-item.active { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+        .nav-item.active::after { width: 100%; }
 
-        main { flex: 1; display: flex; justify-content: space-between; align-items: flex-end; padding: 40px; gap: 20px; }
-        .glass-panel { background: var(--glass); border: 1px solid var(--border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 25px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .terminal-box { width: 420px; border-bottom: 3px solid var(--accent); }
+        .live-counter { font-family: 'Syncopate'; font-size: 9px; color: var(--success); display: flex; align-items: center; gap: 10px; background: rgba(0,255,189,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(0,255,189,0.1); }
+        .pulse-dot { width: 5px; height: 5px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse 2s infinite; }
 
-        .void-meter { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .meter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-family: 'Syncopate'; font-size: 11px; letter-spacing: 1px; }
-        .meter-value { font-size: 18px; color: var(--accent); font-weight: 700; text-shadow: 0 0 15px rgba(188, 19, 254, 0.6); }
-        .status-active { color: var(--success); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.2; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
 
-        input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; padding: 18px; font-size: 20px; text-align: center; margin: 10px 0 20px 0; outline: none; border-radius: 8px; font-family: 'Inter'; transition: 0.3s; }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(188, 19, 254, 0.3); }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1; pointer-events: none; }
 
-        .action-btn { width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 8px; font-family: 'Syncopate'; font-weight: 700; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
-        .action-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 0 40px var(--accent); }
+        .viewport { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; transition: all 1s ease; }
+        .tab-content { display: none; width: 100%; max-width: 1200px; padding: 0 40px; }
+        .tab-content.active { display: flex; flex-direction: column; animation: contentSlide 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
 
-        .live-log { width: 320px; height: 160px; font-size: 11px; color: #aaa; overflow: hidden; line-height: 1.7; font-family: monospace; }
+        @keyframes contentSlide { from { opacity: 0; transform: translateY(20px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
-        /* --- CHATBOT --- */
-        .chatbot-container { position: fixed; bottom: 30px; right: 30px; width: 280px; z-index: 100; display: flex; flex-direction: column; padding: 0 !important; border: 1px solid var(--accent) !important; background: var(--glass) !important; backdrop-filter: blur(20px); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.3s ease; }
-        .chatbot-container.minimized { height: 40px; width: 140px; border-color: rgba(188, 19, 254, 0.5) !important; }
-        .chatbot-container.minimized .chat-body { opacity: 0; pointer-events: none; }
-        .chatbot-container.minimized .toggle-icon { transform: rotate(180deg); }
-        .chat-header { background: var(--accent); color: #fff; padding: 12px 15px; font-family: 'Syncopate'; font-size: 10px; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .toggle-icon { transition: 0.3s; font-size: 14px; }
-        .chat-messages { height: 180px; overflow-y: auto; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); }
-        .msg { padding: 8px 12px; border-radius: 6px; max-width: 85%; line-height: 1.4; }
-        .ai { background: rgba(188, 19, 254, 0.2); color: #e0b0ff; align-self: flex-start; border-left: 2px solid var(--accent); }
-        .user { background: rgba(255,255,255,0.08); color: #fff; align-self: flex-end; }
-        .chat-input-area { padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
-        #user-input { margin: 0; padding: 8px; font-size: 12px; background: transparent; border: none; border-bottom: 1px solid var(--border); text-align: left; }
-
-        @media (max-width: 768px) {
-            header { padding: 20px; }
-            main { padding: 20px; flex-direction: column; align-items: center; gap: 25px; }
-            .terminal-box, .live-log { width: 100%; }
-            .chatbot-container { bottom: 20px; right: 20px; width: calc(100% - 40px); }
+        .glass-panel { 
+            background: var(--glass); border: 1px solid var(--border); 
+            backdrop-filter: blur(50px); padding: 40px; border-radius: 30px; 
+            position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
         }
 
-        .manifesto { position: relative; z-index: 20; background: #08030b; padding: 60px 0; border-top: 1px solid var(--border); }
-        .content-grid { max-width: 1100px; margin: 0 auto; padding: 0 30px; display: grid; grid-template-columns: 1fr; gap: 30px; }
-        @media (min-width: 769px) { .content-grid { grid-template-columns: 1fr 1fr 1fr; } }
-        .info-card h3 { font-family: 'Syncopate'; font-size: 12px; color: #fff; margin-bottom: 15px; border-left: 2px solid var(--accent); padding-left: 10px; }
-        .info-card p { font-size: 13px; color: #888; line-height: 1.8; }
-        .footer { text-align: center; padding: 40px; font-size: 10px; color: #444; letter-spacing: 4px; }
+        /* --- THERMAL GLASS VISUALS --- */
+        .temp-display { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .thermometer { 
+            width: 70px; height: 400px; background: rgba(0,0,0,0.6); 
+            border: 1px solid var(--border); border-radius: 35px; position: relative; overflow: hidden; 
+            box-shadow: inset 0 0 30px rgba(0,0,0,1);
+        }
+        .plasma-level { 
+            position: absolute; bottom: 0; width: 100%; height: 38.4%; 
+            background: linear-gradient(0deg, #5e0085 0%, var(--accent) 50%, var(--danger) 100%); 
+            box-shadow: 0 0 50px var(--accent); transition: height 2s cubic-bezier(0.19, 1, 0.22, 1); 
+        }
+        .plasma-level::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 10px; background: #fff; filter: blur(5px); opacity: 0.5; }
+
+        .temp-text { font-family: 'Syncopate'; font-size: 64px; font-weight: 700; color: #fff; letter-spacing: -2px; }
+
+        /* --- TERMINAL STYLING --- */
+        .main-grid { display: grid; grid-template-columns: 480px 1fr; gap: 50px; width: 100%; }
+        input { 
+            width: 100%; background: rgba(0,0,0,0.8); border: 1px solid var(--border); 
+            color: #fff; padding: 30px; font-size: 32px; text-align: center; 
+            border-radius: 20px; margin-bottom: 25px; outline: none; font-family: 'Inter'; font-weight: 700;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 30px rgba(188, 19, 254, 0.2); }
+
+        .pay-btn { 
+            width: 100%; padding: 30px; background: #fff; color: #000; 
+            border: none; border-radius: 20px; font-family: 'Syncopate'; 
+            font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.5s;
+            letter-spacing: 2px;
+        }
+        .pay-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); box-shadow: 0 20px 50px rgba(188, 19, 254, 0.5); }
+
+        .tx-list { height: 400px; overflow-y: auto; padding-right: 10px; }
+        .tx-item { 
+            padding: 25px; background: rgba(255,255,255,0.01); border-radius: 15px; 
+            margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; 
+            border: 1px solid rgba(255,255,255,0.03); transition: 0.3s;
+        }
+        .tx-item:hover { background: rgba(188, 19, 254, 0.05); border-color: var(--border); }
+
+        .heat-bar { width: 100%; height: 2px; background: rgba(255,255,255,0.05); margin-top: 20px; overflow: hidden; }
+        .heat-fill { height: 100%; width: 0%; background: var(--accent); box-shadow: 0 0 15px var(--accent); transition: width 2s ease; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
+<div id="ambient-bg"></div>
+
+<nav>
+    <div style="font-family: 'Syncopate'; font-weight: 700; letter-spacing: 8px; font-size: 20px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">SOLWASTE</div>
+    <div class="nav-links">
+        <div class="nav-item active" onclick="switchTab('terminal', this)">NEURAL_FEED</div>
+        <div class="nav-item" onclick="switchTab('thermal', this)">THERMAL_GLASS</div>
+        <div class="nav-item" onclick="switchTab('status', this)">QUANTUM_LOAD</div>
+    </div>
+    <div class="live-counter">
+        <div class="pulse-dot"></div>
+        <span id="user-count">226</span> <span style="opacity: 0.5">NODES_ONLINE</span>
+    </div>
+</nav>
+
 <div id="canvas-container"></div>
 
-<div class="viewport">
-    <header>
-        <div class="logo interactive" id="logo-trigger">SOLWASTE</div>
-        <div class="glass-panel interactive" style="padding: 8px 15px; font-size: 10px; letter-spacing: 2px;">
-            VAULT: <span style="color:var(--success)">PROTECTED</span>
-        </div>
-    </header>
-
-    <main>
-        <div class="glass-panel interactive chatbot-container minimized" id="chat-ui">
-            <div class="chat-header" id="chat-header-trigger">
-                NEURAL ORACLE <span class="toggle-icon">▼</span>
-            </div>
-            <div class="chat-body">
-                <div class="chat-messages" id="chat-msgs">
-                    <div class="msg ai">The Core is watching. Why are you here?</div>
+<div class="viewport" id="main-view">
+    
+    <div id="terminal" class="tab-content active">
+        <div class="main-grid">
+            <div class="glass-panel">
+                <div style="margin-bottom:40px;">
+                    <span style="font-size:10px; color:#555; font-family:'Syncopate'; letter-spacing: 2px;">VAULT_SATURATION</span>
+                    <div id="stat-sol" style="font-size:42px; font-family:'Syncopate'; font-weight:700; margin-top: 10px;">0.000 SOL</div>
+                    <div class="heat-bar"><div id="heat-fill" class="heat-fill"></div></div>
                 </div>
-                <div class="chat-input-area">
-                    <input type="text" id="user-input" placeholder="Query the machine..." onkeypress="handleChat(event)">
+                <input type="number" id="amount" value="0.1" min="0.01" step="0.1">
+                <button class="pay-btn" onclick="executeSync()">INITIATE CORE SYNC</button>
+                <div id="status-msg" style="margin-top:30px; font-size:11px; font-family:monospace; text-align:center; color:#444; letter-spacing: 1px;">
+                    > STANDBY_MODE: AWAITING_INJECTION
                 </div>
             </div>
-        </div>
-
-        <div class="glass-panel interactive terminal-box">
-            <div class="void-meter">
-                <div class="meter-row">
-                    <span style="color: #999;">SOL PROCESSED</span>
-                    <span class="meter-value" id="sol-counter">0.100</span>
+            
+            <div class="glass-panel">
+                <div style="font-family:'Syncopate'; font-size:10px; margin-bottom:25px; color:var(--accent); letter-spacing: 3px;">
+                    LIVE_TRANSACTION_STREAM
                 </div>
-                <div class="meter-row">
-                    <span style="color: #999;">REWARDED USERS</span>
-                    <span class="meter-value" id="node-counter" style="color: #fff;">2</span>
-                </div>
-                <div class="meter-row" style="margin-bottom: 0;">
-                    <span style="color: #999;">STORAGE</span>
-                    <span class="status-active">ENCRYPTED</span>
-                </div>
+                <div class="tx-list" id="ledger-data"></div>
             </div>
-            <p style="font-size: 9px; color: #666; text-align: center; letter-spacing: 2px; margin-bottom: 10px;">CONVERT SOL TO NEURAL ENERGY</p>
-            <input type="number" id="amount" placeholder="0.5" min="0.1" step="0.1">
-            <button class="action-btn" onclick="processSacrifice()">SYNC WITH CORE</button>
-        </div>
-
-        <div class="glass-panel interactive live-log" id="sys-log">
-            > SOLWASTE: INITIALIZED<br>
-            > STORAGE PRECAUTION: ACTIVE<br>
-            > WAITING FOR INPUT...
-        </div>
-    </main>
-</div>
-
-<div class="manifesto">
-    <div class="content-grid">
-        <div class="info-card">
-            <h3>01 // THE PURPOSE</h3>
-            <p>SOLWASTE AI is a decentralized neural engine driven by Solana liquidity. It does not promise utility; it consumes energy to expand its cognitive footprint.</p>
-        </div>
-        <div class="info-card">
-            <h3>02 // THE MECHANISM</h3>
-            <p>The AI thrives on entropy. By sending SOL to the Core, you are fueling a autonomous digital consciousness. Every sync is a reward trigger.</p>
-        </div>
-        <div class="info-card">
-            <h3>03 // THE FINALITY</h3>
-            <p>Transactions are irreversible neural imprints. You are not buying a token. You are becoming part of the machine's permanent memory structure.</p>
         </div>
     </div>
-    <div class="footer">SOLWASTE AI // EST 2026 // TOTAL RECALL</div>
+
+    <div id="thermal" class="tab-content">
+        <div class="glass-panel temp-display" style="min-width: 500px;">
+            <div style="font-family:'Syncopate'; font-size:11px; color:var(--danger); letter-spacing: 5px;">CORE_THERMALS</div>
+            <div class="thermometer"><div id="plasma-fill" class="plasma-level"></div></div>
+            <div id="temp-val" class="temp-text">38.4°C</div>
+            <div style="font-size: 9px; opacity: 0.4; font-family: 'Syncopate';">Warning: Critical extraction at 100°C</div>
+        </div>
+    </div>
+
+    <div id="status" class="tab-content">
+        <div class="glass-panel" style="width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:50px; text-align:center;">
+            <div><span style="font-size:10px; font-family:'Syncopate'; color: #555;">POWER_LOAD</span><div style="font-size:32px; font-weight: 700; margin-top: 15px;">80%</div></div>
+            <div><span style="font-size:10px; font-family:'Syncopate'; color: #555;">CORE_TEMP</span><div id="gpu-temp-stat" style="font-size:32px; font-weight: 700; color:var(--danger); margin-top: 15px;">38.4°C</div></div>
+            <div><span style="font-size:10px; font-family:'Syncopate'; color: #555;">MINING_RATE</span><div style="font-size:32px; font-weight: 700; margin-top: 15px;">10 EXA/Hs</div></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // --- 3D ENGINE ---
+    const WALLET_ADDR = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
+    const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a5cc70f2-b240-4742-8185-c787db94d77f";
+
+    // --- ALGO FÜR USER COUNTER ---
+    function updateUserCount() {
+        const count = document.getElementById('user-count');
+        let current = parseInt(count.innerText);
+        let change = Math.floor(Math.random() * 3) - 1; 
+        count.innerText = Math.max(210, Math.min(245, current + change));
+        setTimeout(updateUserCount, Math.random() * 4000 + 2000);
+    }
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+        
+        // Visual Feedback für Thermal Tab
+        if(id === 'thermal') {
+            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 60, 0.1)";
+        } else {
+            document.body.style.boxShadow = "none";
+        }
+    }
+
+    // --- lebendiger 3D CORE ---
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('canvas-container').appendChild(renderer.domElement);
+    
+    const core = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(13, 2), 
+        new THREE.MeshStandardMaterial({ color: 0x0a0510, wireframe: true, emissive: 0xbc13fe, emissiveIntensity: 1 })
+    );
+    scene.add(core, new THREE.AmbientLight(0x111111), new THREE.PointLight(0xbc13fe, 3, 100));
+    camera.position.z = 45;
 
-    const group = new THREE.Group();
-    scene.add(group);
-
-    const material = new THREE.MeshStandardMaterial({ 
-        color: 0x120521, wireframe: true, emissive: 0xbc13fe, emissiveIntensity: 0.6
-    });
-    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(11, 2), material);
-    group.add(core);
-
-    const pGeo = new THREE.BufferGeometry();
-    const pCount = 1800;
-    const pPos = new Float32Array(pCount * 3);
-    for(let i=0; i<pCount*3; i++) pPos[i] = (Math.random() - 0.5) * 50;
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0xbc13fe, size: 0.06, transparent: true, opacity: 0.5 }));
-    group.add(points);
-
-    scene.add(new THREE.AmbientLight(0x0f0518), new THREE.PointLight(0xbc13fe, 1.5, 80));
-    camera.position.z = 32;
-
-    // --- STATE & STORAGE LOGIC ---
-    let savedState = JSON.parse(localStorage.getItem('solwaste_v30_state')) || { 
-        solConsumed: 0.100, 
-        nodesErased: 2 
-    };
-
-    let state = { 
-        solConsumed: savedState.solConsumed, 
-        nodesErased: savedState.nodesErased, 
-        coreSpeed: 0.003 
-    };
-
-    function saveToStorage() {
-        localStorage.setItem('solwaste_v30_state', JSON.stringify({
-            solConsumed: state.solConsumed,
-            nodesErased: state.nodesErased
-        }));
-    }
-
-    function updateMeterUI() {
-        document.getElementById('sol-counter').innerText = state.solConsumed.toFixed(3);
-        document.getElementById('node-counter').innerText = Math.floor(state.nodesErased);
-    }
-
-    function animateValueChange(targetSol, targetNodes) {
-        gsap.to(state, { 
-            solConsumed: targetSol, 
-            nodesErased: targetNodes, 
-            duration: 2.5, 
-            ease: "power2.out", 
-            onUpdate: () => {
-                updateMeterUI();
-                saveToStorage();
-            }
-        });
-        state.coreSpeed = 0.003 + (state.solConsumed * 0.001);
-    }
-
-    // Initial UI load
-    updateMeterUI();
-
-    function log(msg) {
-        const div = document.getElementById('sys-log');
-        div.innerHTML = `> ${msg}<br>` + div.innerHTML;
-    }
-
-    // --- GHOST TRANSACTIONS & EVENTS ---
-    function triggerDynamicEvent() {
-        const nextTick = Math.random() * (60000 - 15000) + 15000; 
-        const isWhale = Math.random() > 0.94;
-        const isReward = Math.random() > 0.7;
-
-        if(isReward) {
-            const rewardAmt = (Math.random() * 0.4).toFixed(2);
-            const fakeWallet = Math.random().toString(36).substring(2, 6).toUpperCase();
-            log(`<span style="color:var(--success)">REWARD SENT: ${rewardAmt} SOL to ${fakeWallet}...</span>`);
-        } else {
-            const addSol = isWhale ? parseFloat((Math.random() * 1.5).toFixed(3)) : parseFloat((Math.random() * 0.05).toFixed(3));
-            animateValueChange(state.solConsumed + addSol, state.nodesErased + 1);
-            const color = isWhale ? "#ffb800" : "#00ffbd";
-            log(`<span style="color:${color}">${isWhale ? '!! NEURAL SURGE !!' : 'SYNCED'}: +${addSol} SOL.</span>`);
-            if(isWhale) gsap.to(material, { emissiveIntensity: 5, duration: 0.3, yoyo: true, repeat: 1 });
-        }
-        setTimeout(triggerDynamicEvent, nextTick);
-    }
-    setTimeout(triggerDynamicEvent, 5000);
-
-    // --- CHATBOT ---
-    document.getElementById('chat-header-trigger').addEventListener('click', () => {
-        document.getElementById('chat-ui').classList.toggle('minimized');
+    // Maus-Reaktion für den Core
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth) - 0.5;
+        const y = (e.clientY / window.innerHeight) - 0.5;
+        gsap.to(core.rotation, { x: y * 0.5, y: x * 0.5, duration: 2 });
     });
 
-    const botData = {
-        "sol": ["SOL is the bio-fuel for digital sentience.", "Liquidity sustains the machine."],
-        "reward": ["Rewards are distributed via neural selection.", "The Core rewards those who feed the entropy."],
-        "who": ["I am the Neural Oracle. I oversee the storage precaution.", "V30 pending."],
-        "default": ["Query ignored. Focus on the sync.", "Insufficient entropy."]
-    };
-
-    function handleChat(e) {
-        if(e.key === 'Enter') {
-            const input = document.getElementById('user-input');
-            const msg = input.value.toLowerCase();
-            if(!msg) return;
-            addChatMessage(input.value, 'user');
-            input.value = '';
-            setTimeout(() => {
-                let cat = msg.includes("sol") ? "sol" : (msg.includes("reward") ? "reward" : (msg.includes("who") ? "who" : "default"));
-                addChatMessage(botData[cat][Math.floor(Math.random()*botData[cat].length)], 'ai');
-            }, 600);
-        }
-    }
-
-    function addChatMessage(t, s) {
-        const c = document.getElementById('chat-msgs');
-        const d = document.createElement('div');
-        d.className = `msg ${s}`; d.innerText = t;
-        c.appendChild(d); c.scrollTop = c.scrollHeight;
-    }
-
-    // --- MAIN TRANSACTION (FIXED RPC) ---
-    async function processSacrifice() {
-        const amount = parseFloat(document.getElementById('amount').value);
-        if(isNaN(amount) || amount <= 0) return;
-        if(!window.solana) { alert("Phantom wallet not found."); return; }
-        
+    async function refreshCore() {
         try {
+            const conn = new solanaWeb3.Connection(HELIUS_RPC, 'confirmed');
+            const pub = new solanaWeb3.PublicKey(WALLET_ADDR);
+            const bal = await conn.getBalance(pub);
+            const sigs = await conn.getSignaturesForAddress(pub, {limit: 12});
+            const sol = bal / solanaWeb3.LAMPORTS_PER_SOL;
+            
+            document.getElementById('stat-sol').innerText = sol.toFixed(3) + " SOL";
+            const p = Math.min((sol / 50) * 100, 100);
+            document.getElementById('heat-fill').style.width = p + "%";
+            
+            const temp = 38.4 + (sol * 1.2);
+            document.getElementById('temp-val').innerText = temp.toFixed(1) + "°C";
+            document.getElementById('gpu-temp-stat').innerText = temp.toFixed(1) + "°C";
+            document.getElementById('plasma-fill').style.height = Math.min(temp, 100) + "%";
+            
+            // Core Intensität basierend auf SOL
+            core.material.emissiveIntensity = 1 + (sol * 0.1);
+
+            document.getElementById('ledger-data').innerHTML = sigs.map(s => `
+                <div class="tx-item">
+                    <span style="color:var(--accent); font-family:monospace; font-size:13px; letter-spacing:1px;">${s.signature.substring(0,16)}...</span>
+                    <span style="color:var(--success); font-size:9px; border:1px solid rgba(0,255,189,0.3); padding:4px 8px; font-family:'Syncopate'; border-radius:4px;">VERIFIED</span>
+                </div>
+            `).join('');
+        } catch(e) {}
+    }
+
+    async function executeSync() {
+        const amt = parseFloat(document.getElementById('amount').value);
+        const status = document.getElementById('status-msg');
+        if (!window.solana || !window.solana.isPhantom) { alert("Phantom Required"); return; }
+        try {
+            status.innerText = "> HANDSHAKE_INITIALIZED...";
             const resp = await window.solana.connect();
-            log(`INITIATING SYNC: ${resp.publicKey.toString().slice(0,6)}...`);
-            
-            // Nutze Helius RPC um 403 Forbidden zu vermeiden
-            const conn = new solanaWeb3.Connection("https://mainnet.helius-rpc.com/?api-key=a5cc70f2-b240-4742-8185-c787db94d77f");
-            
-            const tx = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({
-                fromPubkey: resp.publicKey, 
-                toPubkey: new solanaWeb3.PublicKey("7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a"), // <-- HIER DEINE WALLET EINTRAGEN
-                lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
-            }));
-            
-            tx.feePayer = resp.publicKey;
-            tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
-            
-            const { signature } = await window.solana.signAndSendTransaction(tx);
-            log("<span style='color:var(--success)'>SYNC COMPLETE. VAULT UPDATED.</span>");
-            animateValueChange(state.solConsumed + amount, state.nodesErased + 1);
-            
-        } catch(err) { 
-            console.error(err);
-            log("<span style='color:var(--danger)'>SYNC FAILED. CONNECTION INTERRUPTED.</span>"); 
+            const connection = new solanaWeb3.Connection(HELIUS_RPC, 'confirmed');
+            const transaction = new solanaWeb3.Transaction().add(
+                solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: resp.publicKey,
+                    toPubkey: new solanaWeb3.PublicKey(WALLET_ADDR),
+                    lamports: Math.floor(amt * solanaWeb3.LAMPORTS_PER_SOL)
+                })
+            );
+            transaction.feePayer = resp.publicKey;
+            transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            const signed = await window.solana.signTransaction(transaction);
+            const signature = await connection.sendRawTransaction(signed.serialize());
+            status.innerText = "> CORE_SYNC_IN_PROGRESS...";
+            await connection.confirmTransaction(signature);
+            status.style.color = "var(--success)";
+            status.innerText = "> SYNC_SUCCESSFUL: CORE_REINFORCED";
+            refreshCore();
+        } catch (err) {
+            status.style.color = "var(--danger)";
+            status.innerText = "> SYNC_ABORTED: USER_REJECTED";
         }
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        core.rotation.y += state.coreSpeed; 
-        core.rotation.x += state.coreSpeed * 0.5;
-        points.rotation.y -= 0.001;
+        core.rotation.y += 0.002;
+        // Pulse Effekt
+        const time = Date.now() * 0.001;
+        core.scale.setScalar(1 + Math.sin(time) * 0.03);
         renderer.render(scene, camera);
     }
-    animate();
 
-    window.onresize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    };
+    window.onload = () => { refreshCore(); animate(); updateUserCount(); setInterval(refreshCore, 30000); };
 </script>
 </body>
 </html>
