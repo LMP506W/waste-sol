@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SOLWASTE | NEURAL PULSE</title>
+    <title>SOLWASTE | NEURAL PULSE V48</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
@@ -15,10 +15,10 @@
             --bg: #050208; --glass: rgba(10, 5, 20, 0.7); --border: rgba(188, 19, 254, 0.2);
         }
 
+        /* --- GLOBAL & CRT OVERLAY --- */
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
 
-        /* --- CRT & SCANLINE OVERLAY --- */
         body::before {
             content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
@@ -27,84 +27,53 @@
 
         #ambient-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: blur(100px); opacity: 0.3; pointer-events: none; }
 
-        nav {
-            position: fixed; top: 0; width: 100%; padding: 40px 60px;
-            display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+        /* --- NAVIGATION --- */
+        nav { 
+            position: fixed; top: 0; width: 100%; padding: 40px 60px; 
+            display: flex; justify-content: space-between; align-items: center; z-index: 1000; 
+            background: linear-gradient(to bottom, rgba(5,2,8,0.8), transparent);
         }
         .nav-links { display: flex; gap: 50px; }
-        .nav-item { 
-            font-family: 'Syncopate'; font-size: 10px; letter-spacing: 4px; color: rgba(255,255,255,0.3); 
-            cursor: pointer; transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative;
-        }
-        .nav-item::after { content: ''; position: absolute; bottom: -10px; left: 0; width: 0%; height: 1px; background: var(--accent); transition: 0.5s; box-shadow: 0 0 10px var(--accent); }
+        .nav-item { font-family: 'Syncopate'; font-size: 10px; letter-spacing: 4px; color: rgba(255,255,255,0.3); cursor: pointer; transition: 0.5s; position: relative; }
         .nav-item.active { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
-        .nav-item.active::after { width: 100%; }
+        .nav-item.active::after { content: ''; position: absolute; bottom: -10px; left: 0; width: 100%; height: 1px; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
 
         .live-counter { font-family: 'Syncopate'; font-size: 9px; color: var(--success); display: flex; align-items: center; gap: 10px; background: rgba(0,255,189,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(0,255,189,0.1); }
-        .pulse-dot { width: 5px; height: 5px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse 2s infinite; }
-
+        .pulse-dot { width: 5px; height: 5px; background: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.2; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
 
+        /* --- BACKGROUND CANVAS --- */
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1; pointer-events: none; }
-
-        .viewport { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; transition: all 1s ease; }
+        
+        /* --- VIEWPORT CORE LAYOUT --- */
+        .viewport { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 100px; }
         .tab-content { display: none; width: 100%; max-width: 1200px; padding: 0 40px; }
-        .tab-content.active { display: flex; flex-direction: column; animation: contentSlide 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
+        .tab-content.active { display: flex; flex-direction: column; animation: contentSlide 0.8s cubic-bezier(0.19, 1, 0.22, 1); }
+        @keyframes contentSlide { from { opacity: 0; transform: translateY(30px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
-        @keyframes contentSlide { from { opacity: 0; transform: translateY(20px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        .glass-panel { background: var(--glass); border: 1px solid var(--border); backdrop-filter: blur(50px); padding: 40px; border-radius: 30px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
 
-        .glass-panel { 
-            background: var(--glass); border: 1px solid var(--border); 
-            backdrop-filter: blur(50px); padding: 40px; border-radius: 30px; 
-            position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-        }
-
-        /* --- THERMAL GLASS VISUALS --- */
-        .temp-display { display: flex; flex-direction: column; align-items: center; gap: 30px; }
-        .thermometer { 
-            width: 70px; height: 400px; background: rgba(0,0,0,0.6); 
-            border: 1px solid var(--border); border-radius: 35px; position: relative; overflow: hidden; 
-            box-shadow: inset 0 0 30px rgba(0,0,0,1);
-        }
-        .plasma-level { 
-            position: absolute; bottom: 0; width: 100%; height: 38.4%; 
-            background: linear-gradient(0deg, #5e0085 0%, var(--accent) 50%, var(--danger) 100%); 
-            box-shadow: 0 0 50px var(--accent); transition: height 2s cubic-bezier(0.19, 1, 0.22, 1); 
-        }
-        .plasma-level::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 10px; background: #fff; filter: blur(5px); opacity: 0.5; }
-
-        .temp-text { font-family: 'Syncopate'; font-size: 64px; font-weight: 700; color: #fff; letter-spacing: -2px; }
-
-        /* --- TERMINAL STYLING --- */
+        /* --- TAB: NEURAL FEED --- */
         .main-grid { display: grid; grid-template-columns: 480px 1fr; gap: 50px; width: 100%; }
-        input { 
-            width: 100%; background: rgba(0,0,0,0.8); border: 1px solid var(--border); 
-            color: #fff; padding: 30px; font-size: 32px; text-align: center; 
-            border-radius: 20px; margin-bottom: 25px; outline: none; font-family: 'Inter'; font-weight: 700;
-            transition: 0.3s;
-        }
+        input { width: 100%; background: rgba(0,0,0,0.8); border: 1px solid var(--border); color: #fff; padding: 30px; font-size: 32px; text-align: center; border-radius: 20px; margin-bottom: 25px; outline: none; font-family: 'Inter'; font-weight: 700; transition: 0.3s; }
         input:focus { border-color: var(--accent); box-shadow: 0 0 30px rgba(188, 19, 254, 0.2); }
-
-        .pay-btn { 
-            width: 100%; padding: 30px; background: #fff; color: #000; 
-            border: none; border-radius: 20px; font-family: 'Syncopate'; 
-            font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.5s;
-            letter-spacing: 2px;
-        }
+        .pay-btn { width: 100%; padding: 30px; background: #fff; color: #000; border: none; border-radius: 20px; font-family: 'Syncopate'; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.5s; letter-spacing: 2px; }
         .pay-btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); box-shadow: 0 20px 50px rgba(188, 19, 254, 0.5); }
 
-        .tx-list { height: 400px; overflow-y: auto; padding-right: 10px; }
-        .tx-item { 
-            padding: 25px; background: rgba(255,255,255,0.01); border-radius: 15px; 
-            margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; 
-            border: 1px solid rgba(255,255,255,0.03); transition: 0.3s;
-        }
-        .tx-item:hover { background: rgba(188, 19, 254, 0.05); border-color: var(--border); }
+        .tx-list { height: 420px; overflow-y: auto; padding-right: 10px; }
+        .tx-item { padding: 25px; background: rgba(255,255,255,0.01); border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03); transition: 0.3s; }
+        .tx-item:hover { background: rgba(188, 19, 254, 0.05); }
 
-        .heat-bar { width: 100%; height: 2px; background: rgba(255,255,255,0.05); margin-top: 20px; overflow: hidden; }
+        .heat-bar { width: 100%; height: 2px; background: rgba(255,255,255,0.05); margin-top: 20px; }
         .heat-fill { height: 100%; width: 0%; background: var(--accent); box-shadow: 0 0 15px var(--accent); transition: width 2s ease; }
 
-        /* Custom Scrollbar */
+        /* --- TAB: THERMAL GLASS --- */
+        .temp-display { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .thermometer { width: 75px; height: 420px; background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 40px; position: relative; overflow: hidden; }
+        .plasma-level { position: absolute; bottom: 0; width: 100%; height: 38.4%; background: linear-gradient(0deg, #5e0085 0%, var(--accent) 50%, var(--danger) 100%); box-shadow: 0 0 50px var(--accent); transition: height 2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .temp-text { font-family: 'Syncopate'; font-size: 64px; font-weight: 700; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
+
+        /* --- SCROLLBAR --- */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
@@ -114,7 +83,7 @@
 <div id="ambient-bg"></div>
 
 <nav>
-    <div style="font-family: 'Syncopate'; font-weight: 700; letter-spacing: 8px; font-size: 20px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">SOLWASTE</div>
+    <div style="font-family: 'Syncopate'; font-weight: 700; letter-spacing: 8px; font-size: 20px; text-shadow: 0 0 15px rgba(255,255,255,0.2);">SOLWASTE</div>
     <div class="nav-links">
         <div class="nav-item active" onclick="switchTab('terminal', this)">NEURAL_FEED</div>
         <div class="nav-item" onclick="switchTab('thermal', this)">THERMAL_GLASS</div>
@@ -128,7 +97,7 @@
 
 <div id="canvas-container"></div>
 
-<div class="viewport" id="main-view">
+<div class="viewport">
     
     <div id="terminal" class="tab-content active">
         <div class="main-grid">
@@ -155,11 +124,10 @@
     </div>
 
     <div id="thermal" class="tab-content">
-        <div class="glass-panel temp-display" style="min-width: 500px;">
+        <div class="glass-panel temp-display" style="min-width: 500px; margin-top: 20px;">
             <div style="font-family:'Syncopate'; font-size:11px; color:var(--danger); letter-spacing: 5px;">CORE_THERMALS</div>
             <div class="thermometer"><div id="plasma-fill" class="plasma-level"></div></div>
             <div id="temp-val" class="temp-text">38.4°C</div>
-            <div style="font-size: 9px; opacity: 0.4; font-family: 'Syncopate';">Warning: Critical extraction at 100°C</div>
         </div>
     </div>
 
@@ -175,14 +143,15 @@
 
 <script>
     const WALLET_ADDR = "7MSqi82KXWjEGvRP4LPNJLuGVWwhs7Vcoabq85tm8G3a";
-    const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a5cc70f2-b240-4742-8185-c787db94d77f";
+    // DEIN ALCHEMY KEY HIER EINSETZEN
+    const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/IRjl3800L8VqEF-VKysIs";
 
-    // --- ALGO FÜR USER COUNTER ---
+    // --- USER COUNTER ALGO ---
     function updateUserCount() {
         const count = document.getElementById('user-count');
         let current = parseInt(count.innerText);
         let change = Math.floor(Math.random() * 3) - 1; 
-        count.innerText = Math.max(210, Math.min(245, current + change));
+        count.innerText = Math.max(215, Math.min(248, current + change));
         setTimeout(updateUserCount, Math.random() * 4000 + 2000);
     }
 
@@ -192,15 +161,14 @@
         document.getElementById(id).classList.add('active');
         btn.classList.add('active');
         
-        // Visual Feedback für Thermal Tab
         if(id === 'thermal') {
-            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 60, 0.1)";
+            document.body.style.boxShadow = "inset 0 0 150px rgba(255, 0, 60, 0.15)";
         } else {
             document.body.style.boxShadow = "none";
         }
     }
 
-    // --- lebendiger 3D CORE ---
+    // --- 3D NEURAL CORE ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -214,50 +182,57 @@
     scene.add(core, new THREE.AmbientLight(0x111111), new THREE.PointLight(0xbc13fe, 3, 100));
     camera.position.z = 45;
 
-    // Maus-Reaktion für den Core
+    // Maus-Interaktion
     document.addEventListener('mousemove', (e) => {
         const x = (e.clientX / window.innerWidth) - 0.5;
         const y = (e.clientY / window.innerHeight) - 0.5;
-        gsap.to(core.rotation, { x: y * 0.5, y: x * 0.5, duration: 2 });
+        gsap.to(core.rotation, { x: y * 0.6, y: x * 0.6, duration: 2.5 });
     });
 
+    // --- CORE LOGIC (WALLET FETCH) ---
     async function refreshCore() {
         try {
-            const conn = new solanaWeb3.Connection(HELIUS_RPC, 'confirmed');
+            const conn = new solanaWeb3.Connection(ALCHEMY_RPC, 'confirmed');
             const pub = new solanaWeb3.PublicKey(WALLET_ADDR);
             const bal = await conn.getBalance(pub);
             const sigs = await conn.getSignaturesForAddress(pub, {limit: 12});
             const sol = bal / solanaWeb3.LAMPORTS_PER_SOL;
             
             document.getElementById('stat-sol').innerText = sol.toFixed(3) + " SOL";
-            const p = Math.min((sol / 50) * 100, 100);
-            document.getElementById('heat-fill').style.width = p + "%";
+            document.getElementById('heat-fill').style.width = Math.min((sol / 50) * 100, 100) + "%";
             
             const temp = 38.4 + (sol * 1.2);
             document.getElementById('temp-val').innerText = temp.toFixed(1) + "°C";
             document.getElementById('gpu-temp-stat').innerText = temp.toFixed(1) + "°C";
             document.getElementById('plasma-fill').style.height = Math.min(temp, 100) + "%";
             
-            // Core Intensität basierend auf SOL
             core.material.emissiveIntensity = 1 + (sol * 0.1);
 
             document.getElementById('ledger-data').innerHTML = sigs.map(s => `
                 <div class="tx-item">
-                    <span style="color:var(--accent); font-family:monospace; font-size:13px; letter-spacing:1px;">${s.signature.substring(0,16)}...</span>
+                    <span style="color:var(--accent); font-family:monospace; font-size:13px; letter-spacing:1px;">${s.signature.substring(0,18)}...</span>
                     <span style="color:var(--success); font-size:9px; border:1px solid rgba(0,255,189,0.3); padding:4px 8px; font-family:'Syncopate'; border-radius:4px;">VERIFIED</span>
                 </div>
             `).join('');
-        } catch(e) {}
+        } catch(e) { console.error("Sync Error:", e); }
     }
 
+    // --- PAYMENT EXECUTION ---
     async function executeSync() {
         const amt = parseFloat(document.getElementById('amount').value);
         const status = document.getElementById('status-msg');
-        if (!window.solana || !window.solana.isPhantom) { alert("Phantom Required"); return; }
+        if (!window.solana) { alert("Phantom Required"); return; }
+        
         try {
             status.innerText = "> HANDSHAKE_INITIALIZED...";
-            const resp = await window.solana.connect();
-            const connection = new solanaWeb3.Connection(HELIUS_RPC, 'confirmed');
+            const resp = await window.solana.connect({
+                metadata: {
+                    name: "SOLWASTE NEURAL CORE",
+                    description: "Mining Sync Interface",
+                    url: window.location.origin
+                }
+            });
+            const connection = new solanaWeb3.Connection(ALCHEMY_RPC, 'confirmed');
             const transaction = new solanaWeb3.Transaction().add(
                 solanaWeb3.SystemProgram.transfer({
                     fromPubkey: resp.publicKey,
@@ -267,12 +242,15 @@
             );
             transaction.feePayer = resp.publicKey;
             transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            
+            status.innerText = "> AWAITING_SIGNATURE...";
             const signed = await window.solana.signTransaction(transaction);
             const signature = await connection.sendRawTransaction(signed.serialize());
-            status.innerText = "> CORE_SYNC_IN_PROGRESS...";
+            
+            status.innerText = "> BROADCASTING_TO_SOLANA...";
             await connection.confirmTransaction(signature);
             status.style.color = "var(--success)";
-            status.innerText = "> SYNC_SUCCESSFUL: CORE_REINFORCED";
+            status.innerText = "> SYNC_SUCCESSFUL: CORE_STRENGTHENED";
             refreshCore();
         } catch (err) {
             status.style.color = "var(--danger)";
@@ -282,8 +260,7 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        core.rotation.y += 0.002;
-        // Pulse Effekt
+        core.rotation.y += 0.0025;
         const time = Date.now() * 0.001;
         core.scale.setScalar(1 + Math.sin(time) * 0.03);
         renderer.render(scene, camera);
